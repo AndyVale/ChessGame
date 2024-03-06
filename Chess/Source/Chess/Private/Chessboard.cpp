@@ -36,72 +36,43 @@ void AChessboard::OnConstruction(const FTransform& Transform)
 AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY) const
 {
 	//true is intended as "whiteColor", false as "blackColor"
-	FVector Location = AChessboard::GetRelativeLocationByXYPosition(InX, InY) + FVector(0,0,40);
+	FVector Location = AChessboard::GetRelativeLocationByXYPosition(InX, InY) + FVector(0,0,20);
+	FRotator Rotation = FRotator(0, 180, 0);
 	AChessPiece* Piece = nullptr;
 
-	if (InY == 1)
+	if (InY == 1 || InY == 6)
 	{
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, FRotator::ZeroRotator);
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
 		if(Piece)
-			Piece->SetColorAndMaterial(true);
+			Piece->SetColorAndMaterial(InY == 1);//White = True and white pieces are in Y=1
 	}
-	else if (InY == 0)
+	else if (InY == 0 || InY == 7)
 	{
 			switch (InX)
 			{
 			case 0:
 			case 7:
-				Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, FRotator::ZeroRotator);
+				Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
 				break;
 			case 1:
 			case 6:
-				Piece = GetWorld()->SpawnActor<AChessPiece>(Knight, Location, FRotator::ZeroRotator);
+				Piece = GetWorld()->SpawnActor<AChessPiece>(Knight, Location, Rotation);
 				break;
 			case 2:
 			case 5:
-				Piece = GetWorld()->SpawnActor<AChessPiece>(Bishop, Location, FRotator::ZeroRotator);
+				Piece = GetWorld()->SpawnActor<AChessPiece>(Bishop, Location, Rotation);
 				break;
 			case 4:
-				Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, FRotator::ZeroRotator);
+				Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, Rotation);
 				break;
 			case 3:
-				Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, FRotator::ZeroRotator);
+				Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, Rotation);
 				break;
 			}
 			if (Piece)
-				Piece->SetColorAndMaterial(true);
+				Piece->SetColorAndMaterial(InY == 0);//White = True and white pieces are in Y=0
 	}
-	else if (InY == 6) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, FRotator::ZeroRotator);
-		if (Piece)
-			Piece->SetColorAndMaterial(false);
-	}
-	else if (InY == 7)
-	{
-		switch (InX)
-		{
-		case 0:
-		case 7:
-			Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, FRotator::ZeroRotator);
-			break;
-		case 1:
-		case 6:
-			Piece = GetWorld()->SpawnActor<AChessPiece>(Knight, Location, FRotator::ZeroRotator);
-			break;
-		case 2:
-		case 5:
-			Piece = GetWorld()->SpawnActor<AChessPiece>(Bishop, Location, FRotator::ZeroRotator);
-			break;
-		case 3:
-			Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, FRotator::ZeroRotator);
-			break;
-		case 4:
-			Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, FRotator::ZeroRotator);
-			break;
-		}
-		if (Piece)
-			Piece->SetColorAndMaterial(false);
-	}
+	
 	return Piece;
 }
 

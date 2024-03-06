@@ -2,9 +2,12 @@
 
 #pragma once
 
-#include "Chessboard.h"
 #include "CoreMinimal.h"
+#include "GameFramework/GameMode.h"
+#include "GameFramework/Actor.h"
 #include "GameFramework/GameModeBase.h"
+#include "Chessboard.h"
+#include "Chess_PlayerInterface.h"
 #include "Chess_GameMode.generated.h"
 
 /**
@@ -20,14 +23,17 @@ class CHESS_API AChess_GameMode : public AGameModeBase
 
 	virtual void BeginPlay() override;
 	void ChoosePlayerAndStartGame();
-
+public:
 	bool IsGameOver;
 
-	//IChess_PieceInterface* selectedPiece;
+	TArray<IChess_PlayerInterface*> Players;
 
 	// reference to a GameField object
 	UPROPERTY(VisibleAnywhere)
 	AChessboard* Board;
+
+	//UPROPERTY(VisibleAnywhere)
+	//  AChessPiece* SelectedPiece;
 
 	// TSubclassOf template class that provides UClass type safety
 	UPROPERTY(EditDefaultsOnly)
