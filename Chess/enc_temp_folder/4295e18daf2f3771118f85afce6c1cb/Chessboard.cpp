@@ -36,68 +36,57 @@ void AChessboard::OnConstruction(const FTransform& Transform)
 AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY) const
 {
 	//true is intended as "whiteColor", false as "blackColor"
-	FVector Location = AChessboard::GetRelativeLocationByXYPosition(InX, InY) + FVector(0,0,40);
+	FVector Location = AChessboard::GetRelativeLocationByXYPosition(InX, InY) + FVector(0,0,20);
 	AChessPiece* Piece = nullptr;
-
 	if (InY == 1)
 	{
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, FRotator::ZeroRotator);
 		if(Piece)
 			Piece->SetColorAndMaterial(true);
 	}
-	else if (InY == 0)
+	if (InY == 0)
 	{
 			switch (InX)
 			{
 			case 0:
 			case 7:
 				Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, FRotator::ZeroRotator);
-				break;
 			case 1:
 			case 6:
 				Piece = GetWorld()->SpawnActor<AChessPiece>(Knight, Location, FRotator::ZeroRotator);
-				break;
 			case 2:
 			case 5:
 				Piece = GetWorld()->SpawnActor<AChessPiece>(Bishop, Location, FRotator::ZeroRotator);
-				break;
 			case 4:
 				Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, FRotator::ZeroRotator);
-				break;
 			case 3:
 				Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, FRotator::ZeroRotator);
-				break;
 			}
 			if (Piece)
 				Piece->SetColorAndMaterial(true);
 	}
-	else if (InY == 6) {
+	if (InY == 6) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, FRotator::ZeroRotator);
 		if (Piece)
 			Piece->SetColorAndMaterial(false);
 	}
-	else if (InY == 7)
+	if (InY == 7)
 	{
 		switch (InX)
 		{
 		case 0:
 		case 7:
 			Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, FRotator::ZeroRotator);
-			break;
 		case 1:
 		case 6:
 			Piece = GetWorld()->SpawnActor<AChessPiece>(Knight, Location, FRotator::ZeroRotator);
-			break;
 		case 2:
 		case 5:
 			Piece = GetWorld()->SpawnActor<AChessPiece>(Bishop, Location, FRotator::ZeroRotator);
-			break;
 		case 3:
 			Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, FRotator::ZeroRotator);
-			break;
 		case 4:
 			Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, FRotator::ZeroRotator);
-			break;
 		}
 		if (Piece)
 			Piece->SetColorAndMaterial(false);
@@ -124,8 +113,7 @@ void AChessboard::GenerateField()
 			}
 			const float TileScale = SquareSize / 100;
 			Obj->SetActorScale3D(FVector(TileScale, TileScale, 0.2));
-			SquareMap.Add(FVector2D(x, y), Obj);//TODO:SquareMap mi serve davvero?meeh
-			PieceMap.Add(FVector2D(x, y), Pce);
+			SquareMap.Add(FVector2D(x, y), Obj);
 		}
 	}
 }

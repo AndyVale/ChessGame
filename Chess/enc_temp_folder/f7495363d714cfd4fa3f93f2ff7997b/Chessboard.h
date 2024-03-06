@@ -19,9 +19,8 @@ public:
 
 	UPROPERTY(Transient)
 	TMap<FVector2D, ASquare*> SquareMap;
-
-	UPROPERTY(Transient)
-	TMap<FVector2D, AChessPiece*> PieceMap;
+	//UPROPERTY(Transient)
+	//TMap<FVector2D, AChessPiece> PieceMap;
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ASquare> SquareClass;
