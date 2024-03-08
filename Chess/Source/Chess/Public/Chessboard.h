@@ -1,12 +1,20 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+//Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "Square.h"
-#include "ChessPiece.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Chessboard.generated.h"
+
+UENUM()
+enum ChessColor {
+	WHITE,
+	BLACK,
+	NAC,
+};
+
+class AChessPiece;
 
 UCLASS()
 class CHESS_API AChessboard : public AActor
@@ -17,11 +25,20 @@ public:
 	// Sets default values for this actor's properties
 	AChessboard();
 
-	UPROPERTY(Transient)
-	TMap<FVector2D, ASquare*> SquareMap;
+	AChessPiece* GetPieceFromXY(FVector2D xy);
+
+	bool SetPieceFromXY(FVector2D xy, AChessPiece* p);//return false if xy is not valid
+
+	ChessColor GetPieceColorFromXY(FVector2D xy);
 
 	UPROPERTY(Transient)
-	TMap<FVector2D, AChessPiece*> PieceMap;
+	TMap<AChessPiece*, FVector2D> Piece_XY;
+
+	UPROPERTY(Transient)
+	TMap<FVector2D, AChessPiece*> XY_Piece;
+
+	UPROPERTY(Transient)
+	TMap<FVector2D, ASquare*> XY_Square;
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ASquare> SquareClass;
@@ -35,8 +52,18 @@ public:
 	//UFUNCTION(BluePrintCallable)
 	//void ResetField();
 
+	void MakeASafeMove(FVector2D, FVector2D);//for human player
+
+	void MakeAMove(FVector2D, FVector2D);//for AI
+
+	void ShowFeasibleMoves(AChessPiece* Piece);
+
+	void restoreBoardColors();
+
 	virtual void OnConstruction(const FTransform& Transform) override;
 	void GenerateField();
+
+	FVector2D GetPositionFromHit(const FHitResult& Hit);
 
 	FVector GetRelativeLocationByXYPosition(const int32 InX, const int32 InY) const;
 
@@ -44,7 +71,6 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TSubclassOf<AChessPiece> Bishop;
@@ -65,5 +91,6 @@ protected:
 	TSubclassOf<AChessPiece> Rook;
 
 private:
+
 	AChessPiece* SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY) const;
 };

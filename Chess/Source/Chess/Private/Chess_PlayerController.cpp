@@ -2,10 +2,10 @@
 
 #pragma once
 
+#include "Chess_PlayerController.h"
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Chess_HumanPlayer.h"
-#include "Chess_PlayerController.h"
 #include "InputActionValue.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -36,8 +36,6 @@ void AChess_PlayerController::ClickOnGrid()
 {
 	// Logica specifica per il click sulla griglia
 	UE_LOG(LogTemp, Error, TEXT("ClickOnGrid rilevato"));
-
-
 	const auto HumanPlayer = Cast<AChess_HumanPlayer>(GetPawn());
 	if (IsValid(HumanPlayer))
 	{

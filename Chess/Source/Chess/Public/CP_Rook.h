@@ -13,5 +13,6 @@ UCLASS()
 class CHESS_API ACP_Rook : public AChessPiece
 {
 	GENERATED_BODY()
-	
+public:
+	TArray<FVector2D>GetFeasibleMoves(FVector2D*, AChessboard* Board) override;
 };

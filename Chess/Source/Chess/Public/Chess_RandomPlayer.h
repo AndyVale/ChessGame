@@ -2,30 +2,23 @@
 
 #pragma once
 
-#include "ChessPiece.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Chess_PlayerInterface.h"
-//#include "MyGameInstance.h"
-#include "Camera/CameraComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "Chess_HumanPlayer.generated.h"
+#include "Chess_RandomPlayer.generated.h"
 
 UCLASS()
-class CHESS_API AChess_HumanPlayer : public APawn, public IChess_PlayerInterface
+class CHESS_API AChess_RandomPlayer : public APawn, public IChess_PlayerInterface
 {
 	GENERATED_BODY()
+
 public:
 	// Sets default values for this pawn's properties
-	AChess_HumanPlayer();
-	UCameraComponent* Camera;
+	AChess_RandomPlayer();
 
-	//UScacchiGameInstance* GameInstance
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	bool bIsMyTurn = false;
-	ChessColor MyColor = WHITE;
 
 public:
 	// Called every frame
@@ -36,8 +29,4 @@ public:
 	virtual void OnTurn() override;
 	virtual void OnWin() override;
 	virtual void OnLose() override;
-
-	UFUNCTION()
-	void OnClick();
-
 };

@@ -25,17 +25,20 @@ class CHESS_API AChess_GameMode : public AGameModeBase
 	void ChoosePlayerAndStartGame();
 public:
 	bool IsGameOver;
-
+	void TurnNextPlayer();
 	TArray<IChess_PlayerInterface*> Players;
 
 	// reference to a GameField object
 	UPROPERTY(VisibleAnywhere)
 	AChessboard* Board;
 
-	//UPROPERTY(VisibleAnywhere)
-	//  AChessPiece* SelectedPiece;
+	UPROPERTY(Transient)
+	AChessPiece* SelectedPiece;
 
 	// TSubclassOf template class that provides UClass type safety
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AChessboard> BoardClass;
+private:
+	void ToggleCurrentPlayer();
+	int32 CurrentPlayer;
 };
