@@ -30,7 +30,7 @@ class CHESS_API IChess_PlayerInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	PlayerColor Color;
-
+	bool bIsCheck = false;
 	virtual void OnTurn() {};
 	virtual void OnWin() {};
 	virtual void OnLose() {};

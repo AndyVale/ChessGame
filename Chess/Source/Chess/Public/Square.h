@@ -19,10 +19,18 @@ public:
 	// Sets the color (black or white) of the square
 	void setPiece(AChessPiece* p);
 	AChessPiece* getPiece();
+
 	void ResetSelectedAndSetColor(bool);
+
 	void SetColor(bool c);
+
 	void SetAsSelected(bool);
+
 	bool IsSelected();
+
+	void SetDangerColor();
+
+	bool IsDanger();
 
 protected:
 	// Called when the game starts or when spawned
@@ -46,7 +54,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	UMaterialInstance* SelectedMaterial;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	UMaterialInstance* DangerMaterial;
+
 	bool bIsSelected;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

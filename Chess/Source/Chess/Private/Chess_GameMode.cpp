@@ -68,9 +68,18 @@ void AChess_GameMode::ToggleCurrentPlayer()
 		CurrentPlayer = 0;
 	}
 }
+
 void AChess_GameMode::TurnNextPlayer()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cambio turno"));
 	ToggleCurrentPlayer();
 	Players[CurrentPlayer]->OnTurn();
+	Board->RestoreBoardColors();
+	ControlChecks();
+}
+
+void AChess_GameMode::ControlChecks() 
+{
+	Board->CheckControl(WHITE);
+	Board->CheckControl(BLACK);
 }

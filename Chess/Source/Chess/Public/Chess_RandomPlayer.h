@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Chessboard.h"
 #include "GameFramework/Pawn.h"
 #include "Chess_PlayerInterface.h"
 #include "Chess_RandomPlayer.generated.h"
@@ -15,7 +16,8 @@ class CHESS_API AChess_RandomPlayer : public APawn, public IChess_PlayerInterfac
 public:
 	// Sets default values for this pawn's properties
 	AChess_RandomPlayer();
-
+	void MakeRandomMove();
+	ChessColor RandomPColor;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

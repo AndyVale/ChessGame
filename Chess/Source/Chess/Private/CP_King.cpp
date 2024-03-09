@@ -8,43 +8,24 @@ TArray<FVector2D> ACP_King::GetFeasibleMoves(FVector2D* xy, AChessboard* Board)
     TArray<FVector2D> moves = Super::GetFeasibleMoves(xy, Board);
     int x = (*xy)[0], y = (*xy)[1];
     int max = Board->BoardSize;
-    if (y + 1 < max)
-    {
-        if (Board->GetPieceColorFromXY(FVector2D(x, y + 1)) != PieceColor)
-        {
-            moves.Add(FVector2D(x, y + 1));
-        }
-        if(x + 1 < max && Board->GetPieceColorFromXY(FVector2D(x + 1, y + 1)) != PieceColor)
-        {
-            moves.Add(FVector2D(x + 1, y + 1));
-        }
-        if (x - 1 >= 0 && Board->GetPieceColorFromXY(FVector2D(x - 1, y + 1)) != PieceColor)
-        {
-            moves.Add(FVector2D(x - 1, y + 1));
-        }
-    }
-    if (y - 1 >= 0)
-    {
-        if (Board->GetPieceColorFromXY(FVector2D(x, y - 1)) != PieceColor)
-        {
-            moves.Add(FVector2D(x, y - 1));
-        }
-        if (x + 1 < max && Board->GetPieceColorFromXY(FVector2D(x + 1, y - 1)) != PieceColor)
-        {
-            moves.Add(FVector2D(x + 1, y - 1));
-        }
-        if (x - 1 >= 0 && Board->GetPieceColorFromXY(FVector2D(x - 1, y - 1)) != PieceColor)
-        {
-            moves.Add(FVector2D(x - 1, y - 1));
+    //Possible moves:
+    FVector2D kingMoves[8] = {
+        FVector2D(0, 1),
+        FVector2D(1, 1),
+        FVector2D(-1, 1),
+        FVector2D(0, -1),
+        FVector2D(1, -1),
+        FVector2D(-1, -1),
+        FVector2D(1, 0),
+        FVector2D(-1, 0)
+    };
+
+    for (const FVector2D& move : kingMoves) {
+        FVector2D newLoc = FVector2D(x + move.X, y + move.Y);
+        if (newLoc.X >= 0 && newLoc.X < max && newLoc.Y >= 0 && newLoc.Y < max && Board->GetPieceColorFromXY(newLoc) != PieceColor) {
+            moves.Add(newLoc);
         }
     }
-    if (x + 1 < max && Board->GetPieceColorFromXY(FVector2D(x + 1, y)) != PieceColor)
-    {
-        moves.Add(FVector2D(x + 1, y));
-    }
-    if (x - 1 >= 0 && Board->GetPieceColorFromXY(FVector2D(x - 1, y)) != PieceColor)
-    {
-        moves.Add(FVector2D(x - 1, y));
-    }
+
     return moves;
 }

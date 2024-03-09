@@ -6,6 +6,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "Chess_PlayerInterface.h"
+#include "Chess_GameMode.h"
 //#include "MyGameInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -20,14 +21,6 @@ public:
 	AChess_HumanPlayer();
 	UCameraComponent* Camera;
 
-	//UScacchiGameInstance* GameInstance
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	bool bIsMyTurn = false;
-	ChessColor MyColor = WHITE;
-
-public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -39,5 +32,16 @@ public:
 
 	UFUNCTION()
 	void OnClick();
+
+
+	//UScacchiGameInstance* GameInstance
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+	bool bIsMyTurn = false;
+	ChessColor MyColor = WHITE;
+private:
+	void HandlePieceClick(AChess_GameMode* GameMode, AChessboard* Board, AChessPiece* CurrPiece);
+	void HandleSquareClick(AChess_GameMode* GameMode, AChessboard* Board, ASquare* CurrSquare);
 
 };

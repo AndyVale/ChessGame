@@ -31,21 +31,20 @@ void AChessPiece::SetColorAndMaterial(ChessColor c)
     }
 }
 
-TArray<FVector2D> AChessPiece::GetFeasibleMoves(FVector2D* xy, AChessboard* Board)
+TArray<FVector2D> AChessPiece::GetFeasibleMoves(FVector2D* xy, AChessboard* Board)//TODO:Levare come mossa feasible il mangiare il RE
 {
-	TArray<FVector2D> moves;
-	//if (xy)
-	//{
-	//	moves.Add(*xy);//you can always click on the selected piece to undo the move
-	//}
-	return moves;//TODO:IMPLEMENTARE QUESTE SULLE VARIE PEDINE
+    TArray<FVector2D> moves;
+    /*if (xy)
+    {
+        moves.Add(*xy);//you can always click on the selected piece to undo the move
+    }*/
+    return moves;
 }
 
 // Called when the game starts or when spawned
 void AChessPiece::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -57,158 +56,72 @@ void AChessPiece::Tick(float DeltaTime)
 void AChessPiece::GetFeasibleDiagonals(FVector2D* xy, AChessboard* Board, TArray<FVector2D>& moves)
 {
     int max = Board->BoardSize;
-    int x = (*xy)[0], y = (*xy)[1], i = 0, j = 0;
-    bool foundPiece = false;
+    int x = (*xy)[0], y = (*xy)[1];
 
-    //up right:
-    i = x + 1;
-    j = y + 1;
-    foundPiece = false;
-    while (!foundPiece && i < max && j < max)
+    FVector2D bishopDirections[4] =
     {
-        if (Board->GetPieceFromXY(FVector2D(i, j)))
-        {
-            foundPiece = true;
-            if (Board->GetPieceColorFromXY(FVector2D(i, j)) == PieceColor)
-            {
-                break;
-            }
-        }
-        moves.Add(FVector2D(i, j));
-        i++;
-        j++;
-    }
+        FVector2D(1, 1),  //up right
+        FVector2D(-1, 1), //up left
+        FVector2D(1, -1), //down right
+        FVector2D(-1, -1) //down left
+    };
+    for (const FVector2D& move : bishopDirections) 
+    {
+        int i = x + move.X;
+        int j = y + move.Y;
+        bool foundPiece = false;
 
-    //up left:
-    i = x - 1;
-    j = y + 1;
-    foundPiece = false;
-    while (!foundPiece && i >= 0 && j < max)
-    {
-        if (Board->GetPieceFromXY(FVector2D(i, j)))
+        while (!foundPiece && i >= 0 && i < max && j >= 0 && j < max) 
         {
-            foundPiece = true;
-            if (Board->GetPieceColorFromXY(FVector2D(i, j)) == PieceColor)
+            if (Board->GetPieceFromXY(FVector2D(i, j)))
             {
-                break;
+                foundPiece = true;
+                if (Board->GetPieceColorFromXY(FVector2D(i, j)) == PieceColor)
+                {
+                    break;
+                }
             }
+            moves.Add(FVector2D(i, j));
+            i += move.X;
+            j += move.Y;
         }
-        moves.Add(FVector2D(i, j));
-        i--;
-        j++;
-    }
-
-    //down right:
-    i = x + 1;
-    j = y - 1;
-    foundPiece = false;
-    while (!foundPiece && i < max && j >= 0)
-    {
-        if (Board->GetPieceFromXY(FVector2D(i, j)))
-        {
-            foundPiece = true;
-            if (Board->GetPieceColorFromXY(FVector2D(i, j)) == PieceColor)
-            {
-                break;
-            }
-        }
-        moves.Add(FVector2D(i, j));
-        i++;
-        j--;
-    }
-
-    //down left:
-    i = x - 1;
-    j = y - 1;
-    foundPiece = false;
-    while (!foundPiece && i >= 0 && j >= 0)
-    {
-        if (Board->GetPieceFromXY(FVector2D(i, j)))
-        {
-            foundPiece = true;
-            if (Board->GetPieceColorFromXY(FVector2D(i, j)) == PieceColor)
-            {
-                break;
-            }
-        }
-        moves.Add(FVector2D(i, j));
-        i--;
-        j--;
     }
 }
 
 void AChessPiece::GetFeasibleCross(FVector2D* xy, AChessboard* Board, TArray<FVector2D>& moves)
 {
     int max = Board->BoardSize;
-    int x = (*xy)[0], y = (*xy)[1], i = 0;
-    bool foundPiece = false;
+    int x = (*xy)[0], y = (*xy)[1];
 
-    //up:
-    i = y + 1;
-    foundPiece = false;
-    while (!foundPiece && i < max)
+    FVector2D rookDirections[4] = 
     {
-        if (Board->GetPieceFromXY(FVector2D(x, i)))
+        FVector2D(0, 1),  // up
+        FVector2D(1, 0),  // right
+        FVector2D(0, -1), // down
+        FVector2D(-1, 0)  // left
+    };
+
+    for (const FVector2D& move : rookDirections) 
+    {
+        int i = x + move.X;
+        int j = y + move.Y;
+        bool foundPiece = false;
+
+        while (!foundPiece && i >= 0 && i < max && j >= 0 && j < max)
         {
-            foundPiece = true;
-            if (Board->GetPieceColorFromXY(FVector2D(x, i)) == PieceColor)
+            if (Board->GetPieceFromXY(FVector2D(i, j)))
             {
-                break;
+                foundPiece = true;
+                if (Board->GetPieceColorFromXY(FVector2D(i, j)) == PieceColor)
+                {
+                    break;
+                }
             }
+            moves.Add(FVector2D(i, j));
+            i += move.X;
+            j += move.Y;
         }
-        moves.Add(FVector2D(x, i));
-        i++;
     }
 
-    //left:
-    i = x + 1;
-    foundPiece = false;
-    while (!foundPiece && i < max)
-    {
-        if (Board->GetPieceFromXY(FVector2D(i, y)))
-        {
-            foundPiece = true;
-            if (Board->GetPieceColorFromXY(FVector2D(i, y)) == PieceColor)
-            {
-                break;
-            }
-        }
-        moves.Add(FVector2D(i, y));
-        i++;
-    }
-
-    //Down:
-    i = y - 1;
-    foundPiece = false;
-    while (!foundPiece && i >= 0)
-    {
-        if (Board->GetPieceFromXY(FVector2D(x, i)))
-        {
-            foundPiece = true;
-            if (Board->GetPieceColorFromXY(FVector2D(x, i)) == PieceColor)
-            {
-                break;
-            }
-        }
-        moves.Add(FVector2D(x, i));
-        i--;
-    }
-
-    // right:
-    i = x - 1;
-    foundPiece = false;
-    while (!foundPiece && i >= 0)
-    {
-        if (Board->GetPieceFromXY(FVector2D(i, y)))
-        {
-            foundPiece = true;
-            if (Board->GetPieceColorFromXY(FVector2D(i, y)) == PieceColor)
-            {
-                break;
-            }
-        }
-        moves.Add(FVector2D(i, y));
-        i--;
-    }
 }
 

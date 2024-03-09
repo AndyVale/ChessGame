@@ -7,24 +7,64 @@
 // Sets default values
 AChessboard::AChessboard()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	BoardSize = 8;
 	SquareSize = 100;
 }
 
+FVector2D* AChessboard::GetXYFormPiece(AChessPiece* p)
+{
+	if (p)
+	{
+		switch (p->PieceColor)
+		{
+		case WHITE:
+			if (WhitePieces.Find(p))
+				return WhitePieces.Find(p);
+			break;
+		case BLACK:
+			if (BlackPieces.Find(p))
+				return BlackPieces.Find(p);
+			break;
+		case NAC:
+			break;
+		}
+	}
+	UE_LOG(LogTemp, Error, TEXT("GetXYFormPiece: Piece not found"));
+	return nullptr;
+}
+
 AChessPiece* AChessboard::GetPieceFromXY(FVector2D xy)
 {
-	if(XY_Square.Find(xy) && (*XY_Square.Find(xy)))
+	if (XY_Square.Find(xy) && (*XY_Square.Find(xy)))
 		return (*XY_Square.Find(xy))->getPiece();
-	UE_LOG(LogTemp, Error, TEXT("GetPieceFromXY XY is not a valid position"));
+	UE_LOG(LogTemp, Error, TEXT("GetPieceFromXY: XY is not a valid position"));
 	return nullptr;
 }
 
 bool AChessboard::SetPieceFromXY(FVector2D xy, AChessPiece* p)
 {
+	//Remove old xy
 	if (XY_Square.Find(xy) && (*XY_Square.Find(xy)))
 	{
+		if (p) {
+			switch (p->PieceColor)
+			{
+			case WHITE:
+				WhitePieces.Remove(p);
+				WhitePieces.Add(p, xy);
+				break;
+			case BLACK:
+				BlackPieces.Remove(p);
+				BlackPieces.Add(p, xy);
+				break;
+			case NAC:
+				UE_LOG(LogTemp, Error, TEXT("SetPieceFromXY:Color of piece NAC"));
+				return false;
+				break;
+			}
+		}
 		(*XY_Square.Find(xy))->setPiece(p);
 		return true;
 	}
@@ -57,10 +97,15 @@ void AChessboard::BeginPlay()
 void AChessboard::ShowFeasibleMoves(AChessPiece* Piece)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("ShowFeasibleMoves"));
-	FVector2D* xy = Piece_XY.Find(Piece);
+	FVector2D* xy = GetXYFormPiece(Piece);
+	//TODO: Check control (you must protect the king in this situation)
 	TArray<FVector2D> moves;
-	if(xy)
+	if (xy)
+	{
 		moves = Piece->GetFeasibleMoves(xy, this);
+		moves.Add(*xy); //Adding clicked square to gameplay 
+	}
+	//TODO: Check foreach moves if make the 'same-color' King under attack
 	for (auto pos : moves)
 	{
 		if ((*XY_Square.Find(pos))) {
@@ -69,7 +114,19 @@ void AChessboard::ShowFeasibleMoves(AChessPiece* Piece)
 	}
 }
 
-void AChessboard::restoreBoardColors()
+void AChessboard::CancelFeasibleMoves()
+{
+	for (int32 y = 0; y < BoardSize; y++)
+	{
+		for (int32 x = 0; x < BoardSize; x++)
+		{
+			if ((*XY_Square.Find(FVector2D(x, y)))->IsSelected())
+				(*XY_Square.Find(FVector2D(x, y)))->ResetSelectedAndSetColor((x + y) % 2 == 0);
+		}
+	}
+}
+
+void AChessboard::RestoreBoardColors()
 {
 	for (int32 y = 0; y < BoardSize; y++)
 	{
@@ -86,10 +143,10 @@ void AChessboard::OnConstruction(const FTransform& Transform)
 	//NormalizedCellPadding = FMath::RoundToDouble(((TileSize + CellPadding) / TileSize) * 100) / 100;
 }
 
-AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY) const
+AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY)
 {
 	//true is intended as "whiteColor", false as "blackColor"
-	FVector Location = AChessboard::GetRelativeLocationByXYPosition(InX, InY) + FVector(0,0,20);
+	FVector Location = AChessboard::GetRelativeLocationByXYPosition(InX, InY) + FVector(0, 0, 20);
 	FRotator Rotation = FRotator(0, 180, 0);
 	AChessPiece* Piece = nullptr;
 
@@ -104,34 +161,38 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	}
 	else if (InY == 0 || InY == 7)
 	{
-			switch (InX)
-			{
-			case 0:
-			case 7:
-				Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
-				break;
-			case 1:
-			case 6:
-				Piece = GetWorld()->SpawnActor<AChessPiece>(Knight, Location, Rotation);
-				break;
-			case 2:
-			case 5:
-				Piece = GetWorld()->SpawnActor<AChessPiece>(Bishop, Location, Rotation);
-				break;
-			case 4:
-				Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, Rotation);
-				break;
-			case 3:
-				Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, Rotation);
-				break;
-			default:
-				Piece = nullptr;
-			}
-			if (Piece)
-				if (InY == 0)
-					Piece->SetColorAndMaterial(WHITE);//WHITE pieces are in Y=1
-				else
-					Piece->SetColorAndMaterial(BLACK);//BLACK pieces are in Y=6
+		switch (InX)
+		{
+		case 0:
+		case 7:
+			Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
+			break;
+		case 1:
+		case 6:
+			Piece = GetWorld()->SpawnActor<AChessPiece>(Knight, Location, Rotation);
+			break;
+		case 2:
+		case 5:
+			Piece = GetWorld()->SpawnActor<AChessPiece>(Bishop, Location, Rotation);
+			break;
+		case 4:
+			Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, Rotation);
+			break;
+		case 3:
+			Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, Rotation);
+			if (InY == 0)
+				WhiteKing = Piece;
+			else
+				BlackKing = Piece;//BLACK pieces are in Y=6
+			break;
+		default:
+			Piece = nullptr;
+		}
+		if (Piece)
+			if (InY == 0)
+				Piece->SetColorAndMaterial(WHITE);//WHITE pieces are in Y=1
+			else
+				Piece->SetColorAndMaterial(BLACK);//BLACK pieces are in Y=6
 	}
 	return Piece;
 }
@@ -159,8 +220,10 @@ void AChessboard::GenerateField()
 			Sqr->setPiece(Pce);
 			XY_Square.Add(pos, Sqr);
 			if (Pce != nullptr) {
-				//XY_Piece.Add(pos, Pce);
-				Piece_XY.Add(Pce, FVector2D(x, y));
+				if (Pce->PieceColor == WHITE)
+					WhitePieces.Add(Pce, FVector2D(x, y));
+				if (Pce->PieceColor == BLACK)
+					BlackPieces.Add(Pce, FVector2D(x, y));
 			}
 		}
 	}
@@ -192,14 +255,14 @@ void AChessboard::MakeAMove(FVector2D oldPosition, FVector2D newPosition)//TODO:
 
 	if (!OldSquare || !*OldSquare || !NewSquare || !*NewSquare)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Impossible move, square missing"));
+		UE_LOG(LogTemp, Error, TEXT("MakeAMove:Impossible move, square missingn"));
 		return;
 	}
 
 	AChessPiece* OldPiece = GetPieceFromXY(oldPosition);
 	if (!OldPiece)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Impossible move, no pieces in old position"));
+		UE_LOG(LogTemp, Error, TEXT("MakeAMove:Impossible move, no pieces in old position"));
 		return;
 	}
 
@@ -209,13 +272,17 @@ void AChessboard::MakeAMove(FVector2D oldPosition, FVector2D newPosition)//TODO:
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Eat"));
 		//Note: IS important to destroy and setlocation BEFORE changin the maps. Because of the change of the keys of the maps.
 		//In the others if this is not a problem because there is not a newPiece
+		if (NewPiece->PieceColor == WHITE)
+		{
+			WhitePieces.Remove(NewPiece);
+		}
+		else {
+			BlackPieces.Remove(NewPiece);
+		}
 		(NewPiece)->Destroy();
 		(OldPiece)->SetActorLocation(GetRelativeLocationByXYPosition(newPosition[0], newPosition[1]));
 		SetPieceFromXY(oldPosition, nullptr);
-		Piece_XY.Remove(NewPiece);
 		SetPieceFromXY(newPosition, OldPiece);
-		Piece_XY.Remove(OldPiece);
-		Piece_XY.Add(OldPiece, newPosition);
 		return;
 	}
 	else
@@ -223,18 +290,65 @@ void AChessboard::MakeAMove(FVector2D oldPosition, FVector2D newPosition)//TODO:
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Move"));
 		SetPieceFromXY(oldPosition, nullptr);
 		SetPieceFromXY(newPosition, OldPiece);
-		Piece_XY.Add(OldPiece, newPosition);
+		//Piece_XY.Add(OldPiece, newPosition);
 		(OldPiece)->SetActorLocation(GetRelativeLocationByXYPosition(newPosition[0], newPosition[1]));
 		return;
 	}
 }
 
-void AChessboard::MakeASafeMove(FVector2D oldPosition, FVector2D newPosition)
+bool AChessboard::CheckControl(ChessColor C)
+{
+	AChessPiece* ActualKing;
+	FVector2D KingPosition;
+	TMap<AChessPiece*, FVector2D> ActualEnemyPices;
+	TArray<FVector2D> SpottedSquares;
+	if (C == WHITE)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("CONTROL WHITE!"));
+		ActualKing = WhiteKing;
+		ActualEnemyPices = BlackPieces;
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("CONTROL BLACK!"));
+		ActualKing = BlackKing;
+		ActualEnemyPices = WhitePieces;
+	}
+	if (!ActualKing) {
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("KING DIED"));
+		return true;
+	}
+	KingPosition = *GetXYFormPiece(ActualKing);
+	for (auto& Piece_XY : ActualEnemyPices)
+	{
+		if (Piece_XY.Key->GetFeasibleMoves(&Piece_XY.Value, this).Contains(KingPosition))
+		{
+			if (C == WHITE)
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("CHECK FOR WHITE!"));
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("CHECK FOR BLACK!"));
+			}
+			(*XY_Square.Find(KingPosition))->SetDangerColor();
+			return true;
+		}
+	}
+	int tmp = KingPosition[0] + KingPosition[1];//tmp variable for casting purpose
+	(*XY_Square.Find(KingPosition))->SetColor((tmp % 2) == 0);
+	return false;
+}
+
+bool AChessboard::MakeASafeMove(FVector2D oldPosition, FVector2D newPosition)
 {
 	if (XY_Square.Find(newPosition) && (*XY_Square.Find(newPosition))->IsSelected())
 	{
-		MakeAMove(oldPosition, newPosition);
+		if (GetPieceFromXY(newPosition) != GetPieceFromXY(oldPosition))
+		{
+			MakeAMove(oldPosition, newPosition);
+			return true;
+		}
 	}
+	return false;
 }
-
-

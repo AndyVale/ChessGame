@@ -13,10 +13,11 @@ TArray<FVector2D> ACP_Pawn::GetFeasibleMoves(FVector2D* xy, AChessboard* Board)
 	if (this->PieceColor == WHITE)//go from 0 to max
 	{
 		if (y + 1 < max) {//move forwards
-			if(!Board->GetPieceFromXY(FVector2D(x, y + 1)))
+			if (!Board->GetPieceFromXY(FVector2D(x, y + 1))) {
 				moves.Add(FVector2D(x, y + 1));
-			if (y == 1 && !Board->XY_Piece.Find(FVector2D(x, y + 2)))
-				moves.Add(FVector2D(x, y + 2));
+				if (y == 1 && !Board->GetPieceFromXY(FVector2D(x, y + 2)))
+					moves.Add(FVector2D(x, y + 2));
+			}
 			if (x + 1 < max && Board->GetPieceColorFromXY(FVector2D(x + 1, y + 1)) == BLACK) {//eat
 				moves.Add(FVector2D(x + 1, y + 1));
 			}
@@ -30,9 +31,11 @@ TArray<FVector2D> ACP_Pawn::GetFeasibleMoves(FVector2D* xy, AChessboard* Board)
 	{
 		if (y - 1 >= 0) {//move backwards
 			if (!Board->GetPieceFromXY(FVector2D(x, y - 1)))
+			{
 				moves.Add(FVector2D(x, y - 1));
-			if (y == 6)
-				moves.Add(FVector2D(x, y - 2));
+				if (y == 6 && !Board->GetPieceFromXY(FVector2D(x, y - 2)))
+					moves.Add(FVector2D(x, y - 2));
+			}
 			if (x + 1 < max && Board->GetPieceColorFromXY(FVector2D(x + 1, y - 1)) == WHITE) {//eat
 				moves.Add(FVector2D(x + 1, y - 1));
 			}

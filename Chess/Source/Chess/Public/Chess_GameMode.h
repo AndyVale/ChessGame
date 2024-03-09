@@ -40,5 +40,8 @@ public:
 	TSubclassOf<AChessboard> BoardClass;
 private:
 	void ToggleCurrentPlayer();
+
+	void ControlChecks();
+
 	int32 CurrentPlayer;
 };

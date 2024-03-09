@@ -34,9 +34,12 @@ void ASquare::ResetSelectedAndSetColor(bool c)
 
 void ASquare::SetAsSelected(bool m)
 {
-	bIsSelected = true;
-	if(m)
-		SquareMesh->SetMaterial(0, SelectedMaterial);
+	if (!IsDanger())
+	{
+		bIsSelected = true;
+		if (m)
+			SquareMesh->SetMaterial(0, SelectedMaterial);
+	}
 }
 
 void ASquare::setPiece(AChessPiece* p)
@@ -58,6 +61,16 @@ bool ASquare::IsSelected()
 void ASquare::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ASquare::SetDangerColor()
+{
+	SquareMesh->SetMaterial(0, DangerMaterial);
+}
+
+bool ASquare::IsDanger()
+{
+	return (SquareMesh->GetMaterial(0) == DangerMaterial);
 }
 
 // Called every frame

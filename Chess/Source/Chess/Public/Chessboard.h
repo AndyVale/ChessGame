@@ -20,22 +20,18 @@ UCLASS()
 class CHESS_API AChessboard : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AChessboard();
+
+	FVector2D* GetXYFormPiece(AChessPiece* p);
 
 	AChessPiece* GetPieceFromXY(FVector2D xy);
 
 	bool SetPieceFromXY(FVector2D xy, AChessPiece* p);//return false if xy is not valid
 
 	ChessColor GetPieceColorFromXY(FVector2D xy);
-
-	UPROPERTY(Transient)
-	TMap<AChessPiece*, FVector2D> Piece_XY;
-
-	UPROPERTY(Transient)
-	TMap<FVector2D, AChessPiece*> XY_Piece;
 
 	UPROPERTY(Transient)
 	TMap<FVector2D, ASquare*> XY_Square;
@@ -49,18 +45,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float SquareSize;
 
-	//UFUNCTION(BluePrintCallable)
-	//void ResetField();
+	bool CheckControl(ChessColor C);
 
-	void MakeASafeMove(FVector2D, FVector2D);//for human player
+	bool MakeASafeMove(FVector2D, FVector2D);//for human player
 
 	void MakeAMove(FVector2D, FVector2D);//for AI
 
 	void ShowFeasibleMoves(AChessPiece* Piece);
 
-	void restoreBoardColors();
+	void CancelFeasibleMoves();
+
+	void RestoreBoardColors();
 
 	virtual void OnConstruction(const FTransform& Transform) override;
+
 	void GenerateField();
 
 	FVector2D GetPositionFromHit(const FHitResult& Hit);
@@ -91,6 +89,17 @@ protected:
 	TSubclassOf<AChessPiece> Rook;
 
 private:
+	UPROPERTY(VisibleAnywhere)
+	AChessPiece* WhiteKing;
 
-	AChessPiece* SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY) const;
+	UPROPERTY(VisibleAnywhere)
+	AChessPiece* BlackKing;
+
+	UPROPERTY(VisibleAnywhere)
+	TMap<AChessPiece*, FVector2D> WhitePieces;
+
+	UPROPERTY(VisibleAnywhere)
+	TMap<AChessPiece*, FVector2D> BlackPieces;
+
+	AChessPiece* SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY);
 };
