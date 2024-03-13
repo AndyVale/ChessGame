@@ -5,9 +5,9 @@
 #include "Chessboard.h"
 
 
-TArray<FVector2D> ACP_Pawn::GetFeasibleMoves(FVector2D* xy, AChessboard* Board)
+TArray<FVector2D> ACP_Pawn::GetPieceMoves(FVector2D* xy, AChessboard* Board)
 {
-	TArray<FVector2D> moves = Super::GetFeasibleMoves(xy, Board);
+	TArray<FVector2D> moves = TArray<FVector2D>();
 	int max = Board->BoardSize;
 	int x = (*xy)[0], y = (*xy)[1];
 	if (this->PieceColor == WHITE)//go from 0 to max

@@ -9,7 +9,7 @@
 AChess_RandomPlayer::AChess_RandomPlayer()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	RandomPColor = BLACK;
 }	
 
@@ -18,13 +18,6 @@ void AChess_RandomPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	
-}
-
-// Called every frame
-void AChess_RandomPlayer::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -43,27 +36,48 @@ void AChess_RandomPlayer::OnTurn()
 void AChess_RandomPlayer::MakeRandomMove() {
 	AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode());
 	AChessboard* Board = GameMode->Board;
-	int32 size = Board->BoardSize;
-	FVector2D randomLoc;
-	AChessPiece* randomPiece;
+	TMap<AChessPiece*, FVector2D> ActualPieces = Board->GetPieces(RandomPColor);
+	TArray<bool> actualIsVisited;
+	TArray<AChessPiece*> actualPiece;
+	TArray<FVector2D> actualXY;
+
+	for (auto& p : ActualPieces) {
+		actualIsVisited.Add(false);
+		actualPiece.Add(p.Key);
+		actualXY.Add(p.Value);
+	}
+
+	int32 piecesNumber = actualIsVisited.Num();
+	//int32 size = Board->BoardSize;
+	//AChessPiece* randomPiece;
 	TArray<FVector2D> possibleMoves;
 	int numSize = 0;
-	do {
-		do
-		{
-			randomLoc = FVector2D(FMath::RandRange(0, size), FMath::RandRange(0, size));
-		} while (Board->GetPieceColorFromXY(randomLoc) != RandomPColor);
-		randomPiece = Board->GetPieceFromXY(randomLoc);
-		possibleMoves = randomPiece->GetFeasibleMoves(&randomLoc, Board);//get a black piece
-		numSize = possibleMoves.Num();
-	} while (numSize == 0);//get a piece that can be moved
+	int32 randomPieceIndx = 0;
 
-	int32 randoMove = FMath::Rand() % numSize;
-	FVector2D newLoc = possibleMoves[randoMove];
+	do {
+		randomPieceIndx = FMath::Rand() % piecesNumber;
+		if (!actualIsVisited[randomPieceIndx]) {
+			possibleMoves = Board->GetFeasibleMoves(actualPiece[randomPieceIndx], false);
+			numSize = possibleMoves.Num();
+			actualIsVisited[randomPieceIndx] = true;
+ 		}
+	} while (numSize == 0 && actualIsVisited.Find(false) != INDEX_NONE);//get a piece that can be moved
+
+	if (numSize != 0)
+	{
+		int32 randomMove = FMath::Rand() % numSize;
+		FVector2D newLoc = possibleMoves[randomMove];
+		FVector2D oldLoc = *Board->GetXYFromPiece(actualPiece[randomPieceIndx]);
+		Board->MakeAMove(oldLoc, newLoc, false);
+	}
+	else
+	{
+		//STALLO
+	}
 	//CHEK Control
-	Board->MakeAMove(randomLoc, newLoc);
 	GameMode->TurnNextPlayer();
 }
+
 void AChess_RandomPlayer::OnWin()
 {
 }

@@ -33,6 +33,8 @@ public:
 	UFUNCTION()
 	void OnClick();
 
+	UPROPERTY(Transient)
+	AChessPiece* SelectedPiece;
 
 	//UScacchiGameInstance* GameInstance
 protected:
@@ -41,7 +43,6 @@ protected:
 	bool bIsMyTurn = false;
 	ChessColor MyColor = WHITE;
 private:
-	void HandlePieceClick(AChess_GameMode* GameMode, AChessboard* Board, AChessPiece* CurrPiece);
-	void HandleSquareClick(AChess_GameMode* GameMode, AChessboard* Board, ASquare* CurrSquare);
+
 
 };

@@ -31,15 +31,17 @@ void AChessPiece::SetColorAndMaterial(ChessColor c)
     }
 }
 
-TArray<FVector2D> AChessPiece::GetFeasibleMoves(FVector2D* xy, AChessboard* Board)//TODO:Levare come mossa feasible il mangiare il RE
+/*
+TArray<FVector2D> AChessPiece::GetPieceMoves(FVector2D* xy, AChessboard* Board)//TODO:Levare come mossa feasible il mangiare il RE
 {
     TArray<FVector2D> moves;
-    /*if (xy)
-    {
-        moves.Add(*xy);//you can always click on the selected piece to undo the move
-    }*/
-    return moves;
+    //if (xy)
+   // {
+   //     moves.Add(*xy);//you can always click on the selected piece to undo the move
+   // }
+return moves;
 }
+*/
 
 // Called when the game starts or when spawned
 void AChessPiece::BeginPlay()
@@ -124,4 +126,3 @@ void AChessPiece::GetFeasibleCross(FVector2D* xy, AChessboard* Board, TArray<FVe
     }
 
 }
-

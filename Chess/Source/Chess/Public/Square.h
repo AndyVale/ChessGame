@@ -18,13 +18,12 @@ public:
 	ASquare();
 	// Sets the color (black or white) of the square
 	void setPiece(AChessPiece* p);
+
 	AChessPiece* getPiece();
 
-	void ResetSelectedAndSetColor(bool);
+	void SetSquareColor(bool c);
 
-	void SetColor(bool c);
-
-	void SetAsSelected(bool);
+	void SetAsSelected();
 
 	bool IsSelected();
 
@@ -57,10 +56,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	UMaterialInstance* DangerMaterial;
 
-	bool bIsSelected;
+	//bool bIsSelected;
 
 public:	
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	//virtual void Tick(float DeltaTime) override;
 
 };

@@ -3,9 +3,9 @@
 
 #include "CP_Knight.h"
 
-TArray<FVector2D> ACP_Knight::GetFeasibleMoves(FVector2D* xy, AChessboard* Board)
+TArray<FVector2D> ACP_Knight::GetPieceMoves(FVector2D* xy, AChessboard* Board)
 {//TODO:Aggiungere impossibilità di automangiarsi
-    TArray<FVector2D> moves = Super::GetFeasibleMoves(xy, Board);
+    TArray<FVector2D> moves = TArray<FVector2D>();
     int x = (*xy)[0], y = (*xy)[1];
     int max = Board->BoardSize;
     //Possible moves:

@@ -42,7 +42,6 @@ void AChess_HumanPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 void AChess_HumanPlayer::OnTurn()
 {
 	bIsMyTurn = true;
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("UUAAANM"));
 	//GameInstance->SetTurnMessage(TEXT("Human Turn"));
 }
 
@@ -61,78 +60,58 @@ void AChess_HumanPlayer::OnLose()
 
 void AChess_HumanPlayer::OnClick()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Onclick"));
     FHitResult Hit = FHitResult(ForceInit);
     GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
 
     if (!bIsMyTurn)
         return;
 
-    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("TUO TURNOOOOOOOOOOO"));
-
     AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode());
     if (GameMode == nullptr) {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("GameMode is null in OnClick function"));
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("GameMode is null in OnClick function"));
         return;
     }
 
     AChessboard* Board = GameMode->Board;
     if (Board == nullptr) {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Board is null in OnClick function"));
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Board is null in OnClick function"));
         return;
     }
 
     if (Hit.bBlockingHit)
     {
-        FVector tempLoc;
-        if (AChessPiece* CurrPiece = Cast<AChessPiece>(Hit.GetActor()))
+        if(SelectedPiece == nullptr)
         {
-            HandlePieceClick(GameMode, Board, CurrPiece);
+            if (AChessPiece* CurrPiece = Cast<AChessPiece>(Hit.GetActor()))
+            {
+                //select piece
+                if (CurrPiece->PieceColor == MyColor) {
+                    SelectedPiece = CurrPiece;
+                    Board->GetFeasibleMoves(SelectedPiece, true);
+                }
+                else {
+                    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("You have to select a piece of your color!"));
+                }
+            }
+           /* else if(ASquare* CurrSquare = Cast<ASquare>(Hit.GetActor()))
+            {
+                //illegal
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("You have to select a piece"));
+            }*/
         }
-        else if (ASquare* CurrSquare = Cast<ASquare>(Hit.GetActor()))
+        else
         {
-            HandleSquareClick(GameMode, Board, CurrSquare);
+            AActor* CurrClicked = nullptr;//using an AActor beacuse no special methods are used here
+            Cast<AChessPiece>(Hit.GetActor()) ? CurrClicked = Cast<AChessPiece>(Hit.GetActor()) : CurrClicked = Cast<ASquare>(Hit.GetActor());
+
+            if (CurrClicked && Board->MakeASafeMove(Board->GetXYPositionByRelativeLocation(SelectedPiece->GetActorLocation()), Board->GetXYPositionByRelativeLocation(CurrClicked->GetActorLocation())))
+            {
+                bIsMyTurn = false;
+            }
+            Board->CancelFeasibleMoves();
+            SelectedPiece = nullptr;
+            if (!bIsMyTurn)
+                GameMode->TurnNextPlayer();
         }
     }
 }
-
-void AChess_HumanPlayer::HandlePieceClick(AChess_GameMode* GameMode, AChessboard* Board, AChessPiece* CurrPiece)
-{
-    if (GameMode->SelectedPiece == nullptr) { // select
-        if (CurrPiece->PieceColor == MyColor) {
-            GameMode->SelectedPiece = CurrPiece;
-            Board->ShowFeasibleMoves(GameMode->SelectedPiece);
-        }
-        else {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Your color is white"));
-        }
-    }
-    else { // eat or delete
-        if (Board->MakeASafeMove(Board->GetXYPositionByRelativeLocation(GameMode->SelectedPiece->GetActorLocation()), Board->GetXYPositionByRelativeLocation(CurrPiece->GetActorLocation())))
-        {
-            bIsMyTurn = false;
-        }
-        Board->CancelFeasibleMoves();
-        GameMode->SelectedPiece = nullptr;
-        if (!bIsMyTurn)
-            GameMode->TurnNextPlayer();
-    }
-}
-
-void AChess_HumanPlayer::HandleSquareClick(AChess_GameMode* GameMode, AChessboard* Board, ASquare* CurrSquare)
-{
-    if (GameMode->SelectedPiece == nullptr) { // illegal move
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("You have to select a piece of your color"));
-    }
-    else { // move
-        if (Board->MakeASafeMove(Board->GetXYPositionByRelativeLocation(GameMode->SelectedPiece->GetActorLocation()), Board->GetXYPositionByRelativeLocation(CurrSquare->GetActorLocation())))
-        {
-            bIsMyTurn = false;
-        }
-        Board->CancelFeasibleMoves();
-        GameMode->SelectedPiece = nullptr;
-        if (!bIsMyTurn)
-            GameMode->TurnNextPlayer();
-    }
-}
-

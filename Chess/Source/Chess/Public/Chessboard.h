@@ -25,9 +25,17 @@ public:
 	// Sets default values for this actor's properties
 	AChessboard();
 
-	FVector2D* GetXYFormPiece(AChessPiece* p);
+	TMap<AChessPiece*, FVector2D> GetPieces(ChessColor C);
+
+	//methods for data structure abstraction:
+	FVector2D* GetXYFromPiece(AChessPiece* p);
 
 	AChessPiece* GetPieceFromXY(FVector2D xy);
+
+	ASquare* GetSquareFromXY(FVector2D xy);
+
+	//FVector2D* GetXYFromSquare(ASquare* p);
+
 
 	bool SetPieceFromXY(FVector2D xy, AChessPiece* p);//return false if xy is not valid
 
@@ -46,12 +54,20 @@ public:
 	float SquareSize;
 
 	bool CheckControl(ChessColor C);
+	
+	bool MateControl(ChessColor C);
 
-	bool MakeASafeMove(FVector2D, FVector2D);//for human player
+	bool StallControl(ChessColor C);
 
-	void MakeAMove(FVector2D, FVector2D);//for AI
+	FVector2D* GetKingPosition(ChessColor C);
 
-	void ShowFeasibleMoves(AChessPiece* Piece);
+	bool MakeASafeMove(FVector2D, FVector2D);
+
+	AChessPiece* MakeAMove(FVector2D, FVector2D, bool simulate);
+
+	//void ShowFeasibleMoves(AChessPiece* Piece);
+
+	TArray<FVector2D> GetFeasibleMoves(AChessPiece* Piece, bool Show);
 
 	void CancelFeasibleMoves();
 
@@ -61,7 +77,7 @@ public:
 
 	void GenerateField();
 
-	FVector2D GetPositionFromHit(const FHitResult& Hit);
+	void RemovePiece(AChessPiece* p);
 
 	FVector GetRelativeLocationByXYPosition(const int32 InX, const int32 InY) const;
 
@@ -102,4 +118,10 @@ private:
 	TMap<AChessPiece*, FVector2D> BlackPieces;
 
 	AChessPiece* SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY);
+
+	void RollbackMove(FVector2D, FVector2D, AChessPiece*);
+
+	void FilterMovesAvoidCheck(AChessPiece* p, TArray<FVector2D>& moves);
+
+	//void FilterMovesOnCheck(AChessPiece* p, TArray<FVector2D>& moves);
 };

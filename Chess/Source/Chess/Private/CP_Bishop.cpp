@@ -3,9 +3,9 @@
 
 #include "CP_Bishop.h"
 
-TArray<FVector2D> ACP_Bishop::GetFeasibleMoves(FVector2D* xy, AChessboard* Board)
+TArray<FVector2D> ACP_Bishop::GetPieceMoves(FVector2D* xy, AChessboard* Board)
 {
-    TArray<FVector2D> moves = Super::GetFeasibleMoves(xy, Board);
+    TArray<FVector2D> moves = TArray<FVector2D>();
     GetFeasibleDiagonals(xy, Board, moves);
     return moves;
 }

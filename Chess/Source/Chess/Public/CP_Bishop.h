@@ -14,5 +14,5 @@ class CHESS_API ACP_Bishop : public AChessPiece
 {
 	GENERATED_BODY()
 public:
-	TArray<FVector2D>GetFeasibleMoves(FVector2D*, AChessboard* Board) override;
+	TArray<FVector2D>GetPieceMoves(FVector2D*, AChessboard* Board) override;
 };

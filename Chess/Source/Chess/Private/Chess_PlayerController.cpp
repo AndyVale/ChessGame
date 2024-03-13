@@ -24,18 +24,14 @@ void AChess_PlayerController::BeginPlay()
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
 		if (ChessContext) {
-			UE_LOG(LogTemp, Error, TEXT("ChessContext Bene"));
 			Subsystem->AddMappingContext(ChessContext, 0);
 		}
-		else
-			UE_LOG(LogTemp, Error, TEXT("ChessContext MALE"));
 	}
 }
 
 void AChess_PlayerController::ClickOnGrid()
 {
 	// Logica specifica per il click sulla griglia
-	UE_LOG(LogTemp, Error, TEXT("ClickOnGrid rilevato"));
 	const auto HumanPlayer = Cast<AChess_HumanPlayer>(GetPawn());
 	if (IsValid(HumanPlayer))
 	{
@@ -51,12 +47,7 @@ void AChess_PlayerController::SetupInputComponent()
 	// Associa la funzione delegata all'azione specificata
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Binding Bene"));
 		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AChess_PlayerController::ClickOnGrid);
-	}
-	else {
-		UE_LOG(LogTemp, Error, TEXT("Binding Male"));
-
 	}
 }
 

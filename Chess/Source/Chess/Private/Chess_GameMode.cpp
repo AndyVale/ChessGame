@@ -71,15 +71,48 @@ void AChess_GameMode::ToggleCurrentPlayer()
 
 void AChess_GameMode::TurnNextPlayer()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cambio turno"));
-	ToggleCurrentPlayer();
-	Players[CurrentPlayer]->OnTurn();
-	Board->RestoreBoardColors();
-	ControlChecks();
+	if (!IsGameOver)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cambio turno"));
+		ToggleCurrentPlayer();
+		Board->RestoreBoardColors();
+		Players[CurrentPlayer]->OnTurn();
+		bool mate = ControlChecks();
+		IsGameOver = mate ? mate : ControlStall();//first check for mate, then for stall
+	}
 }
 
-void AChess_GameMode::ControlChecks() 
+bool AChess_GameMode::ControlChecks() //TODO: Stall check
 {
-	Board->CheckControl(WHITE);
-	Board->CheckControl(BLACK);
+	bool mate = false;
+	ChessColor colorToControl = NAC;
+	colorToControl = CurrentPlayer == 0 ? WHITE : BLACK;
+
+	if (Board->GetKingPosition(colorToControl)) {
+		if (Board->CheckControl(colorToControl)) {
+			if (Board->MateControl(colorToControl)) {
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("--------MATTO!!--------"));
+				UE_LOG(LogTemp, Error, TEXT("--------MATTO!!--------"));
+				mate = true;
+			}
+			if (Board->GetSquareFromXY(*Board->GetKingPosition(colorToControl)))
+			{
+				Board->GetSquareFromXY(*Board->GetKingPosition(colorToControl))->SetDangerColor();
+			}
+		}
+	}
+	
+	return mate;
+}
+
+bool AChess_GameMode::ControlStall()
+{
+	ChessColor colorToControl = NAC;
+	colorToControl = CurrentPlayer == 0 ? WHITE : BLACK;
+	bool stall = Board->StallControl(colorToControl);
+	if (stall) {
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("--------STALLO!!--------"));
+		UE_LOG(LogTemp, Error, TEXT("--------STALLO!!--------"));
+	}
+	return stall;
 }

@@ -8,7 +8,7 @@
 #include "ChessPiece.generated.h"
 
 
-UCLASS()
+UCLASS(Abstract)
 class CHESS_API AChessPiece : public AActor
 {
 	GENERATED_BODY()
@@ -18,8 +18,11 @@ public:
 	AChessPiece();
 	ChessColor PieceColor;
 	void SetColorAndMaterial(ChessColor c);
-	//virtual *** getFeasibleMoves();
-	virtual TArray<FVector2D>GetFeasibleMoves(FVector2D* xy, AChessboard* Board);
+	//GetPieceMoves get all the possible moves of a piece, no regarding at check situations or similar
+
+	
+	virtual TArray<FVector2D>GetPieceMoves(FVector2D* xy, AChessboard* Board)  PURE_VIRTUAL(AChessPiece::GetPieceMoves, return TArray<FVector2D>(););
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
 	USceneComponent* Scene;
 
@@ -42,4 +45,6 @@ public:
 	//Asuiliary methods for Queen, Rook and Bishop moves:
 	void GetFeasibleDiagonals(FVector2D* xy, AChessboard* Board, TArray<FVector2D>& moves);
 	void GetFeasibleCross(FVector2D* xy, AChessboard* Board, TArray<FVector2D>& moves);
+	//9284128: aggiunge solo se non va sotto scacco (DA USARE IL METODO PER ESEGUIRE LE MOSSE PER EVITARE CODICE BRUTTO)
+	//void addFeasibleMove(TArray<FVector2D>& moves); 
 };

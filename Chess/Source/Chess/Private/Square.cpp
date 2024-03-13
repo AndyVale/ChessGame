@@ -13,33 +13,17 @@ ASquare::ASquare()
 	SquareMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	SetRootComponent(Scene);
 	SquareMesh->SetupAttachment(Scene);
-	bIsSelected = false;
 	PieceOn = nullptr;
 }
 
-void ASquare::SetColor(bool c)
+void ASquare::SetSquareColor(bool c)
 {
-	if (c)
-		SquareMesh->SetMaterial(0, WhiteMaterial);
-	else
-		SquareMesh->SetMaterial(0, BlackMaterial);
+	c ? SquareMesh->SetMaterial(0, WhiteMaterial) : SquareMesh->SetMaterial(0, BlackMaterial);
 }
 
-// Called to set Square color
-void ASquare::ResetSelectedAndSetColor(bool c)
+void ASquare::SetAsSelected()
 {
-	bIsSelected = false;
-	SetColor(c);
-}
-
-void ASquare::SetAsSelected(bool m)
-{
-	if (!IsDanger())
-	{
-		bIsSelected = true;
-		if (m)
-			SquareMesh->SetMaterial(0, SelectedMaterial);
-	}
+	SquareMesh->SetMaterial(0, SelectedMaterial);
 }
 
 void ASquare::setPiece(AChessPiece* p)
@@ -54,7 +38,7 @@ AChessPiece* ASquare::getPiece()
 
 bool ASquare::IsSelected()
 {
-	return bIsSelected;
+	return (SquareMesh->GetMaterial(0) == SelectedMaterial);
 }
 
 // Called when the game starts or when spawned
@@ -73,9 +57,9 @@ bool ASquare::IsDanger()
 	return (SquareMesh->GetMaterial(0) == DangerMaterial);
 }
 
-// Called every frame
+/* Called every frame
 void ASquare::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-
+*/
