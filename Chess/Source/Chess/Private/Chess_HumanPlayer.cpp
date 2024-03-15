@@ -17,8 +17,8 @@ AChess_HumanPlayer::AChess_HumanPlayer()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	SetRootComponent(Camera);
-	//GameInstance = Cast<UChessGameInstance>(UGameplayStatics::GetGameInstance(G
-	Color = PlayerColor::WHITE;
+    GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	Color = WHITE;
 }
 
 // Called when the game starts or when spawned
@@ -47,15 +47,15 @@ void AChess_HumanPlayer::OnTurn()
 
 void AChess_HumanPlayer::OnWin()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Win!"));
-	//GameInstance->SetTurnMessage(TEXT("Human Wins!"));
-	//GameInstance->IncrementScoreHumanPlayer();
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Win!"));
+	GameInstanceRef->SetTurnMessage(TEXT("Human Wins!"));
+	GameInstanceRef->IncrementScoreHumanPlayer();
 }
 
 void AChess_HumanPlayer::OnLose()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Lose!"));
-	//GameInstance->SetTurnMessage(TEXT("Human Loses!"));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Lose!"));
+	GameInstanceRef->SetTurnMessage(TEXT("Human Loses!"));
 }
 
 void AChess_HumanPlayer::OnClick()
@@ -80,11 +80,11 @@ void AChess_HumanPlayer::OnClick()
 
     if (Hit.bBlockingHit)
     {
-        if(SelectedPiece == nullptr)
+        if(SelectedPiece == nullptr)//Piece is not selected yet
         {
+            //Select piece
             if (AChessPiece* CurrPiece = Cast<AChessPiece>(Hit.GetActor()))
             {
-                //select piece
                 if (CurrPiece->PieceColor == MyColor) {
                     SelectedPiece = CurrPiece;
                     Board->GetFeasibleMoves(SelectedPiece, true);
@@ -93,19 +93,16 @@ void AChess_HumanPlayer::OnClick()
                     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("You have to select a piece of your color!"));
                 }
             }
-           /* else if(ASquare* CurrSquare = Cast<ASquare>(Hit.GetActor()))
-            {
-                //illegal
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("You have to select a piece"));
-            }*/
         }
         else
         {
-            AActor* CurrClicked = nullptr;//using an AActor beacuse no special methods are used here
+            //Move piece (or eat)
+            AActor* CurrClicked = nullptr;//using an AActor beacuse no 'special' methods are used here
+            //If clicked obj is a square I have to move, otherwise if obj is a piece eat it, it's handled by MakeASafeMove
             Cast<AChessPiece>(Hit.GetActor()) ? CurrClicked = Cast<AChessPiece>(Hit.GetActor()) : CurrClicked = Cast<ASquare>(Hit.GetActor());
 
             if (CurrClicked && Board->MakeASafeMove(Board->GetXYPositionByRelativeLocation(SelectedPiece->GetActorLocation()), Board->GetXYPositionByRelativeLocation(CurrClicked->GetActorLocation())))
-            {
+            {//if MakeASafeMove return the move is done, otherwise the piece is deselected
                 bIsMyTurn = false;
             }
             Board->CancelFeasibleMoves();

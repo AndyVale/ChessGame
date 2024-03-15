@@ -2,6 +2,8 @@
 
 #include "Chessboard.h"
 #include "ChessPiece.h"
+#include <Chess_GameInstance.h>
+#include <Kismet/GameplayStatics.h>
 
 // Sets default values
 AChessboard::AChessboard()
@@ -22,6 +24,33 @@ TMap<AChessPiece*, FVector2D> AChessboard::GetPieces(ChessColor C)
 		return BlackPieces;
 	}
 	return TMap<AChessPiece*, FVector2D>();
+}
+
+void AChessboard::ResetBoard()
+{
+	for (int32 y = 0; y < BoardSize; y++)
+	{
+		for (int32 x = 0; x < BoardSize; x++)
+		{
+			FVector2D xy = (FVector2D(x, y));
+			ASquare* square = GetSquareFromXY(xy);
+			AChessPiece* piece = GetPieceFromXY(xy);
+			if (square)
+			{
+				square->Destroy();
+			}
+			if (piece)
+			{
+				RemovePiece(piece);
+				piece->Destroy();
+			}
+		}
+	}
+	WhiteKing = BlackKing = nullptr;
+	WhitePieces = TMap<AChessPiece*, FVector2D>();
+	BlackPieces = TMap<AChessPiece*, FVector2D>();
+	XY_Square = TMap<FVector2D, ASquare*>();
+	GenerateField();
 }
 
 FVector2D* AChessboard::GetXYFromPiece(AChessPiece* p)
@@ -99,6 +128,10 @@ ChessColor AChessboard::GetPieceColorFromXY(FVector2D xy)
 void AChessboard::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))) {
+		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChessboard::ResetBoard);
+	}
 	if (SquareClass != nullptr)
 	{
 		GenerateField();

@@ -10,9 +10,7 @@
 #include "Chess_PlayerInterface.h"
 #include "Chess_GameMode.generated.h"
 
-/**
- * 
- */
+
 UCLASS()
 class CHESS_API AChess_GameMode : public AGameModeBase
 {
@@ -22,9 +20,13 @@ class CHESS_API AChess_GameMode : public AGameModeBase
 	~AChess_GameMode();
 
 	virtual void BeginPlay() override;
+	UFUNCTION()
 	void ChoosePlayerAndStartGame();
+
 public:
+
 	bool IsGameOver=false;
+
 	void TurnNextPlayer();
 	TArray<IChess_PlayerInterface*> Players;
 

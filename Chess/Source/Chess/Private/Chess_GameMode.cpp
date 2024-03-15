@@ -37,8 +37,8 @@ void AChess_GameMode::BeginPlay()
 		UE_LOG(LogTemp, Error, TEXT("BoardClass is null, can not spawn Chessboard"));
 	}
 
-	float CameraPosX = (this->Board->SquareSize * (this->Board->BoardSize / 2) - (this->Board->SquareSize / 2));
-	FVector CameraPos(CameraPosX, CameraPosX, 1000.0f);
+	float CenterOnBoard = (this->Board->SquareSize * (this->Board->BoardSize / 2) - (this->Board->SquareSize / 2));
+	FVector CameraPos(CenterOnBoard - 100, CenterOnBoard, 1000.0f);//TODO: Remove magic numbers
 	HumanPlayer->SetActorLocationAndRotation(CameraPos, FRotator::ZeroRotator);
 	FRotator ActorRotation = HumanPlayer->GetActorRotation();
 	ActorRotation.Pitch -= 90;//ruoto verso il basso
@@ -52,6 +52,10 @@ void AChess_GameMode::BeginPlay()
 	AChess_RandomPlayer* RandomPlayer = GetWorld()->SpawnActor<AChess_RandomPlayer>(FVector(), FRotator());
 	Players.Add(RandomPlayer);
 
+	if (UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))) {
+		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_GameMode::ChoosePlayerAndStartGame);
+	}
+
 	ChoosePlayerAndStartGame();
 }
 
@@ -59,6 +63,7 @@ void AChess_GameMode::ChoosePlayerAndStartGame()
 {
 	Players[0]->OnTurn();
 }
+
 
 void AChess_GameMode::ToggleCurrentPlayer()
 {
@@ -71,22 +76,25 @@ void AChess_GameMode::ToggleCurrentPlayer()
 
 void AChess_GameMode::TurnNextPlayer()
 {
+	ToggleCurrentPlayer();
 	if (!IsGameOver)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cambio turno"));
-		ToggleCurrentPlayer();
 		Board->RestoreBoardColors();
 		Players[CurrentPlayer]->OnTurn();
 		bool mate = ControlChecks();
 		IsGameOver = mate ? mate : ControlStall();//first check for mate, then for stall
+	}
+	else
+	{
+		Players[CurrentPlayer]->OnWin();
 	}
 }
 
 bool AChess_GameMode::ControlChecks() //TODO: Stall check
 {
 	bool mate = false;
-	ChessColor colorToControl = NAC;
-	colorToControl = CurrentPlayer == 0 ? WHITE : BLACK;
+	ChessColor colorToControl = CurrentPlayer == 0 ? WHITE : BLACK;
 
 	if (Board->GetKingPosition(colorToControl)) {
 		if (Board->CheckControl(colorToControl)) {

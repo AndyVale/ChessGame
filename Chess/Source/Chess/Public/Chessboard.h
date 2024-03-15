@@ -16,6 +16,7 @@ enum ChessColor {
 
 class AChessPiece;
 
+
 UCLASS()
 class CHESS_API AChessboard : public AActor
 {
@@ -26,6 +27,9 @@ public:
 	AChessboard();
 
 	TMap<AChessPiece*, FVector2D> GetPieces(ChessColor C);
+
+	UFUNCTION()
+	void ResetBoard();
 
 	//methods for data structure abstraction:
 	FVector2D* GetXYFromPiece(AChessPiece* p);

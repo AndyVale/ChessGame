@@ -17,6 +17,11 @@ public:
 	// Sets default values for this pawn's properties
 	AChess_RandomPlayer();
 	void MakeRandomMove();
+
+	UFUNCTION()//ResetHandler and bMyTurn are workaround, remove it before last commit 
+	void ResetHandler();
+	bool bMyTurn = false;
+
 	ChessColor RandomPColor = BLACK;
 protected:
 	// Called when the game starts or when spawned
