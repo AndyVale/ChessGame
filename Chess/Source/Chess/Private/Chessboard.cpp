@@ -3,15 +3,41 @@
 #include "Chessboard.h"
 #include "ChessPiece.h"
 #include <Chess_GameInstance.h>
+#include "Chess_GameMode.h"
 #include <Kismet/GameplayStatics.h>
 
 // Sets default values
 AChessboard::AChessboard()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	StackMoves = TArray<TSharedPtr<Chess_Move>>();
+	StackUndoMoves = TArray<TSharedPtr<Chess_Move>>();
 	PrimaryActorTick.bCanEverTick = false;
 	BoardSize = 8;
-	SquareSize = 100;
+	SquareSize = 100; 
+	BlackKing = nullptr;
+	WhiteKing = nullptr;
+}
+
+// Called when the game starts or when spawned
+void AChessboard::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))) {
+		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChessboard::ResetBoard);
+	}
+	if (AChess_GameMode* GameModeRef = Cast<AChess_GameMode>(UGameplayStatics::GetGameMode(GetWorld()))) {
+		GameModeRef->OnReplayMove.AddDynamic(this, &AChessboard::PushAndPopUntilMove);
+	}
+	if (SquareClass != nullptr)
+	{
+		GenerateField();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("SquareClass non trovata in GameField"));
+	}
 }
 
 TMap<AChessPiece*, FVector2D> AChessboard::GetPieces(ChessColor C)
@@ -28,29 +54,29 @@ TMap<AChessPiece*, FVector2D> AChessboard::GetPieces(ChessColor C)
 
 void AChessboard::ResetBoard()
 {
-	for (int32 y = 0; y < BoardSize; y++)
+	TArray<AActor*> ChessPieces, Squares;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AChessPiece::StaticClass(), ChessPieces);
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASquare::StaticClass(), Squares);
+	for (AActor* Actor : ChessPieces)
 	{
-		for (int32 x = 0; x < BoardSize; x++)
-		{
-			FVector2D xy = (FVector2D(x, y));
-			ASquare* square = GetSquareFromXY(xy);
-			AChessPiece* piece = GetPieceFromXY(xy);
-			if (square)
-			{
-				square->Destroy();
-			}
-			if (piece)
-			{
-				RemovePiece(piece);
-				piece->Destroy();
-			}
-		}
+		Actor->Destroy();
 	}
+	for (AActor* Actor : Squares)
+	{
+		Actor->Destroy();
+	}
+
 	WhiteKing = BlackKing = nullptr;
 	WhitePieces = TMap<AChessPiece*, FVector2D>();
 	BlackPieces = TMap<AChessPiece*, FVector2D>();
+	StackMoves = TArray<TSharedPtr<Chess_Move>>();
 	XY_Square = TMap<FVector2D, ASquare*>();
 	GenerateField();
+}
+
+bool AChessboard::IsOnReplay()
+{
+	return StackUndoMoves.Num() != 0;
 }
 
 FVector2D* AChessboard::GetXYFromPiece(AChessPiece* p)
@@ -124,51 +150,33 @@ ChessColor AChessboard::GetPieceColorFromXY(FVector2D xy)
 	return NAC;
 }
 
-// Called when the game starts or when spawned
-void AChessboard::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))) {
-		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChessboard::ResetBoard);
-	}
-	if (SquareClass != nullptr)
-	{
-		GenerateField();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("SquareClass non trovata in GameField"));
-	}
-}
-
-TArray<FVector2D> AChessboard::GetFeasibleMoves(AChessPiece* Piece, bool showMoves)
+TArray<FVector2D> AChessboard::GetFeasibleSquares(AChessPiece* Piece, bool showMoves)
 {
 	FVector2D* xy = GetXYFromPiece(Piece);
-	TArray<FVector2D> moves;
+	TArray<FVector2D> squarePos;
 	if (xy && Piece)
 	{
-		moves = Piece->GetPieceMoves(xy, this);
-	}
+		squarePos = Piece->GetPieceMoves(xy, this);
 
-	FilterMovesAvoidCheck(Piece, moves);
+		FilterMovesAvoidCheck(Piece, squarePos);
 
-	if(showMoves)
-	{
-		moves.Add(*xy); //Adding clicked square to enhance gameplay 
-		for (auto pos : moves)
+		if (showMoves)
 		{
-			ASquare* square = GetSquareFromXY(pos);
-			if (square && !square->IsDanger()) {
-				square->SetAsSelected();
+			squarePos.Add(*xy); //Adding clicked square to enhance gameplay 
+			for (auto pos : squarePos)
+			{
+				ASquare* square = GetSquareFromXY(pos);
+				if (square && !square->IsDanger()) {
+					square->SetAsSelected();
+				}
 			}
 		}
 	}
 
-	return moves;
+	return squarePos;
 }
 
-void AChessboard::CancelFeasibleMoves()
+void AChessboard::CancelFeasibleSquares()
 {
 	for (int32 y = 0; y < BoardSize; y++)
 	{
@@ -316,58 +324,6 @@ FVector2D AChessboard::GetXYPositionByRelativeLocation(const FVector& Location) 
 	return FVector2D(x, y);
 }
 
-AChessPiece* AChessboard::MakeAMove(FVector2D oldPosition, FVector2D newPosition, bool simulate)
-{
-	AChessPiece* eatingPiece = GetPieceFromXY(oldPosition);
-	AChessPiece* eatenPiece = GetPieceFromXY(newPosition);
-
-	if (!eatingPiece)
-	{
-		UE_LOG(LogTemp, Error, TEXT("MakeAMove:Impossible move, no pieces in old position"));
-		return nullptr;
-	}
-
-	//making the move:
-	RemovePiece(eatingPiece);
-	if (eatenPiece)
-	{
-		RemovePiece(eatenPiece);//remove NewPiece
-	}
-	//SetPieceFromXY(oldPosition, nullptr);
-	SetPieceFromXY(newPosition, eatingPiece);
-
-	if (!simulate)//not a simulation, move the piece
-	{
-		if (eatenPiece)
-		{
-			(eatenPiece)->Destroy();
-		}
-		(eatingPiece)->SetActorLocation(GetRelativeLocationByXYPosition(newPosition[0], newPosition[1]));
-	}
-	return eatenPiece;
-}
-
-void AChessboard::RollbackMove(FVector2D oldPosition, FVector2D newPosition, AChessPiece* pieceToRestore)
-{
-	//NOTE: oldPosition MUST have no piece on it, this function is only usable to rollback a move (no "swap moves" are accepted in chess)
-	AChessPiece* OldPiece = GetPieceFromXY(oldPosition);
-	AChessPiece* NewPiece = GetPieceFromXY(newPosition);
-
-	if (OldPiece)
-	{
-		UE_LOG(LogTemp, Error, TEXT("rollbackMove:Impossible rollback, pieces found in old position"));
-		return;
-	}
-	if (!NewPiece)
-	{
-		UE_LOG(LogTemp, Error, TEXT("rollbackMove:Impossible rollback, no pieces in new position"));
-		return;
-	}
-
-	SetPieceFromXY(oldPosition, NewPiece);
-	SetPieceFromXY(newPosition, pieceToRestore);
-}
-
 bool AChessboard::CheckControl(ChessColor C)
 {
 	AChessPiece* ActualKing;
@@ -438,13 +394,14 @@ bool AChessboard::MateControl(ChessColor C)
 	for (auto& Piece_XY : ActualOwnedPieces)
 	{
 		FVector2D oldPos = Piece_XY.Value;
-		for (auto& newPos : GetFeasibleMoves(Piece_XY.Key, false)) {
-			AChessPiece* tmp = MakeAMove(oldPos, newPos, true);
+		for (auto& newPos : GetFeasibleSquares(Piece_XY.Key, false)) {
+			TSharedPtr<Chess_Move> tmpMove = MakeShareable(new Chess_Move(oldPos, newPos, this));
+			MakeAMove(tmpMove, true);
 			if (!CheckControl(C)) {
-				RollbackMove(oldPos, newPos, tmp);
+				RollbackMove(tmpMove, false);
 				return false;
 			}
-			RollbackMove(oldPos, newPos, tmp);
+			RollbackMove(tmpMove, false);
 		}
 	}
 	return true;
@@ -463,7 +420,7 @@ bool AChessboard::StallControl(ChessColor C)
 
 	for (auto& Piece_XY : ActualOwnedPieces)
 	{
-		if (GetFeasibleMoves(Piece_XY.Key, false).Num() > 0)
+		if (GetFeasibleSquares(Piece_XY.Key, false).Num() > 0)
 			return false;
 	}
 	return true;
@@ -487,26 +444,90 @@ bool AChessboard::MakeASafeMove(FVector2D oldPosition, FVector2D newPosition)
 	{
 		if (GetPieceFromXY(newPosition) != GetPieceFromXY(oldPosition))
 		{
-			MakeAMove(oldPosition, newPosition, false);
+			TSharedPtr<Chess_Move> move = MakeShareable(new Chess_Move(oldPosition, newPosition, this));
+			MakeAMove(move, false);
 			return true;
 		}
 	}
 	return false;
 }
 
+void AChessboard::MakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
+{
+	move->MakeMove(simulate);
+	//CANNOT CalculateResult HERE FOR RECURSION PROBLEM
+	/*if (CheckControl(move.GetMoveColor() == WHITE ? BLACK : WHITE))
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("CHECK!"));
+	if (MateControl(move.GetMoveColor() == WHITE ? BLACK : WHITE))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("MATE!"));
+	}
+}*/
+	if (!simulate)
+	{
+		StackMoves.Push(move);
+		OnMove.Broadcast(move->ToString());
+	}
+}
+
+
+void AChessboard::RollbackMove(TSharedPtr<Chess_Move> move, bool simulate)
+{
+	move->RollbackMove(simulate);
+	if (!simulate)
+	{
+		//StackMoves.Pop();
+	}
+}
+
 void AChessboard::FilterMovesAvoidCheck(AChessPiece* p, TArray<FVector2D>& moves)
 {
-	FVector2D oldPos =*GetXYFromPiece(p);
+	FVector2D oldPos;
 	FVector2D newPos;
 
+	if (GetXYFromPiece(p))
+	{
+		oldPos = *GetXYFromPiece(p);
+	}
 	//note: using moves.Num() so the upper bound is automatically refreshed
 	for (int i = 0; i < moves.Num(); i++) {
 		newPos = moves[i];
-		AChessPiece* tmp = MakeAMove(oldPos, newPos, true);
+		TSharedPtr<Chess_Move> tmpMove = MakeShareable(new Chess_Move(oldPos, newPos, this));
+		//tmpMove = &x;
+		MakeAMove(tmpMove, true);
 		if (oldPos != newPos && CheckControl(p->PieceColor)) {
 			moves.Remove(newPos);
 			i--;
 		}
-		RollbackMove(oldPos, newPos, tmp);
+		RollbackMove(tmpMove, false);
 	}
+}
+
+void AChessboard::PushAndPopUntilMove(int32 moveNumber)
+{
+	int32 actualMoveNumber = StackMoves.Num();
+	if (moveNumber <= actualMoveNumber)
+	{
+		for (int32 i = 0; i < actualMoveNumber - moveNumber; i++)
+		{
+			TSharedPtr<Chess_Move> tmpMove = StackMoves.Pop();
+			tmpMove->RollbackMove(false);
+			StackUndoMoves.Push(tmpMove);
+		}
+	}
+	else
+	{
+		for (int32 i = actualMoveNumber; i < moveNumber; i++)
+		{
+			TSharedPtr<Chess_Move> tmpMove = StackUndoMoves.Pop();
+			tmpMove->MakeMove(false);
+			StackMoves.Push(tmpMove);
+		}
+	}
+	ASquare* t1 = GetSquareFromXY(StackMoves.Top().Get()->From);
+	ASquare* t2 = GetSquareFromXY(StackMoves.Top().Get()->To);
+	RestoreBoardColors();
+	t1->InReplay();
+	t2->InReplay();
 }

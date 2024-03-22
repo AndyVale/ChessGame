@@ -53,7 +53,7 @@ void AChess_GameMode::BeginPlay()
 	Players.Add(RandomPlayer);
 
 	if (UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))) {
-		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_GameMode::ChoosePlayerAndStartGame);
+		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_GameMode::ResetHandler);
 	}
 
 	ChoosePlayerAndStartGame();
@@ -61,17 +61,25 @@ void AChess_GameMode::BeginPlay()
 
 void AChess_GameMode::ChoosePlayerAndStartGame()
 {
+	IsGameOver = false;
 	Players[0]->OnTurn();
 }
-
 
 void AChess_GameMode::ToggleCurrentPlayer()
 {
 	CurrentPlayer++;
+	MoveNumber += 1;
 	if (!Players.IsValidIndex(CurrentPlayer))
 	{
 		CurrentPlayer = 0;
+		TurnNumber += 1;
 	}
+	OnPlayerSwap.Broadcast();
+}
+
+void AChess_GameMode::ReplayMove(int32 moveNumber)
+{
+	OnReplayMove.Broadcast(moveNumber);
 }
 
 void AChess_GameMode::TurnNextPlayer()
@@ -82,8 +90,17 @@ void AChess_GameMode::TurnNextPlayer()
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cambio turno"));
 		Board->RestoreBoardColors();
 		Players[CurrentPlayer]->OnTurn();
-		bool mate = ControlChecks();
-		IsGameOver = mate ? mate : ControlStall();//first check for mate, then for stall
+
+		if(ControlChecks())//debug
+		{
+			IsGameOver = true;
+		}
+		else if (ControlStall())
+		{
+			IsGameOver = true;
+		}
+
+		//IsGameOver = mate ? mate : ControlStall();//first check for mate, then for stall
 	}
 	else
 	{
@@ -123,4 +140,11 @@ bool AChess_GameMode::ControlStall()
 		UE_LOG(LogTemp, Error, TEXT("--------STALLO!!--------"));
 	}
 	return stall;
+}
+
+void AChess_GameMode::ResetHandler()
+{
+	TurnNumber = 1;
+	MoveNumber = 1;
+	ChoosePlayerAndStartGame();
 }

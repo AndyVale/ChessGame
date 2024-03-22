@@ -16,7 +16,9 @@ class CHESS_API AChessPiece : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AChessPiece();
+
 	ChessColor PieceColor;
+
 	void SetColorAndMaterial(ChessColor c);
 	//GetPieceMoves get all the possible moves of a piece, no regarding at check situations or similar
 

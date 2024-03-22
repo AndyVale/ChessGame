@@ -5,6 +5,7 @@
 #include "Square.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Chess_Move.h"
 #include "Chessboard.generated.h"
 
 UENUM()
@@ -15,7 +16,8 @@ enum ChessColor {
 };
 
 class AChessPiece;
-
+//TODO: Use chess_move class: move delegate in chess_move and make a move and rollback (keep the interface but move the logic)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMove, const FString, MovePerformed);
 
 UCLASS()
 class CHESS_API AChessboard : public AActor
@@ -26,10 +28,17 @@ public:
 	// Sets default values for this actor's properties
 	AChessboard();
 
+	TSharedPtr<Chess_Move> PopLastMove();
+
 	TMap<AChessPiece*, FVector2D> GetPieces(ChessColor C);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnMove OnMove;//every player must broadcast when a move is successfully performed
 
 	UFUNCTION()
 	void ResetBoard();
+
+	bool IsOnReplay();//return true if the board is on "replay-mode" (in this mode the player cannot do any move)
 
 	//methods for data structure abstraction:
 	FVector2D* GetXYFromPiece(AChessPiece* p);
@@ -37,9 +46,6 @@ public:
 	AChessPiece* GetPieceFromXY(FVector2D xy);
 
 	ASquare* GetSquareFromXY(FVector2D xy);
-
-	//FVector2D* GetXYFromSquare(ASquare* p);
-
 
 	bool SetPieceFromXY(FVector2D xy, AChessPiece* p);//return false if xy is not valid
 
@@ -67,13 +73,13 @@ public:
 
 	bool MakeASafeMove(FVector2D, FVector2D);
 
-	AChessPiece* MakeAMove(FVector2D, FVector2D, bool simulate);
+	void MakeAMove(TSharedPtr<Chess_Move> move, bool simulate);
 
-	//void ShowFeasibleMoves(AChessPiece* Piece);
+	void RollbackMove(TSharedPtr<Chess_Move> move, bool simulate);
 
-	TArray<FVector2D> GetFeasibleMoves(AChessPiece* Piece, bool Show);
+	TArray<FVector2D> GetFeasibleSquares(AChessPiece* Piece, bool Show);
 
-	void CancelFeasibleMoves();
+	void CancelFeasibleSquares();
 
 	void RestoreBoardColors();
 
@@ -109,23 +115,29 @@ protected:
 	TSubclassOf<AChessPiece> Rook;
 
 private:
-	UPROPERTY(VisibleAnywhere)
+
+	TArray<TSharedPtr<Chess_Move>> StackMoves;
+
+	TArray<TSharedPtr<Chess_Move>> StackUndoMoves;
+
+	//UPROPERTY(VisibleAnywhere)
 	AChessPiece* WhiteKing;
 
-	UPROPERTY(VisibleAnywhere)
+	//UPROPERTY(VisibleAnywhere)
 	AChessPiece* BlackKing;
 
-	UPROPERTY(VisibleAnywhere)
+	//UPROPERTY(VisibleAnywhere)
 	TMap<AChessPiece*, FVector2D> WhitePieces;
 
-	UPROPERTY(VisibleAnywhere)
+	//UPROPERTY(VisibleAnywhere)
 	TMap<AChessPiece*, FVector2D> BlackPieces;
 
 	AChessPiece* SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY);
 
-	void RollbackMove(FVector2D, FVector2D, AChessPiece*);
+	//void RollbackMove(FVector2D, FVector2D, AChessPiece*);
 
 	void FilterMovesAvoidCheck(AChessPiece* p, TArray<FVector2D>& moves);
 
-	//void FilterMovesOnCheck(AChessPiece* p, TArray<FVector2D>& moves);
+	UFUNCTION()
+	void PushAndPopUntilMove(int32 moveNumber);
 };

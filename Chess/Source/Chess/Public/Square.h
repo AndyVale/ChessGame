@@ -21,6 +21,8 @@ public:
 
 	AChessPiece* getPiece();
 
+	//FVector2D Cordinates;
+
 	void SetSquareColor(bool c);
 
 	void SetAsSelected();
@@ -30,6 +32,9 @@ public:
 	void SetDangerColor();
 
 	bool IsDanger();
+
+	void InReplay();
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -56,6 +61,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	UMaterialInstance* DangerMaterial;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	UMaterialInstance* ReplayMaterial;
 	//bool bIsSelected;
 
 public:	

@@ -71,14 +71,14 @@ void AChess_HumanPlayer::OnClick()
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("GameMode is null in OnClick function"));
         return;
     }
-
+    
     AChessboard* Board = GameMode->Board;
     if (Board == nullptr) {
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Board is null in OnClick function"));
         return;
     }
 
-    if (Hit.bBlockingHit)
+    if (Hit.bBlockingHit && !Board->IsOnReplay())//if I click on something and the board is not showing a replay TODO: trova un'altra soluzione
     {
         if(SelectedPiece == nullptr)//Piece is not selected yet
         {
@@ -87,7 +87,7 @@ void AChess_HumanPlayer::OnClick()
             {
                 if (CurrPiece->PieceColor == MyColor) {
                     SelectedPiece = CurrPiece;
-                    Board->GetFeasibleMoves(SelectedPiece, true);
+                    Board->GetFeasibleSquares(SelectedPiece, true);
                 }
                 else {
                     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("You have to select a piece of your color!"));
@@ -100,12 +100,15 @@ void AChess_HumanPlayer::OnClick()
             AActor* CurrClicked = nullptr;//using an AActor beacuse no 'special' methods are used here
             //If clicked obj is a square I have to move, otherwise if obj is a piece eat it, it's handled by MakeASafeMove
             Cast<AChessPiece>(Hit.GetActor()) ? CurrClicked = Cast<AChessPiece>(Hit.GetActor()) : CurrClicked = Cast<ASquare>(Hit.GetActor());
+            FVector2D oldLoc = Board->GetXYPositionByRelativeLocation(SelectedPiece->GetActorLocation());
+            FVector2D newLoc = Board->GetXYPositionByRelativeLocation(CurrClicked->GetActorLocation());
 
-            if (CurrClicked && Board->MakeASafeMove(Board->GetXYPositionByRelativeLocation(SelectedPiece->GetActorLocation()), Board->GetXYPositionByRelativeLocation(CurrClicked->GetActorLocation())))
+            if (CurrClicked && Board->MakeASafeMove(oldLoc, newLoc))
             {//if MakeASafeMove return the move is done, otherwise the piece is deselected
+               // Chess_Move succMove = Chess_Move(oldLoc, newLoc);
                 bIsMyTurn = false;
             }
-            Board->CancelFeasibleMoves();
+            Board->CancelFeasibleSquares();
             SelectedPiece = nullptr;
             if (!bIsMyTurn)
                 GameMode->TurnNextPlayer();

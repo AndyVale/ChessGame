@@ -13,6 +13,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnScoreUpdate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReset);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRematch);
+
 
 UCLASS()
 class CHESS_API UChess_GameInstance : public UGameInstance
@@ -26,6 +28,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnScoreUpdate OnScoreUpdate;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnRematch OnRematch;
 
 	UPROPERTY(EditAnywhere)
 	int32 ScoreHumanPlayer = 0;
@@ -45,11 +50,9 @@ public:
 	void IncrementScoreAIPlayer();
 
 	// get the score for human player
-	UFUNCTION(BlueprintCallable)
 	int32 GetScoreHumanPlayer();
 
 	// get the score for AI player
-	UFUNCTION(BlueprintCallable)
 	int32 GetScoreAIPlayer();
 
 	// get the current turn message
@@ -60,7 +63,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTurnMessage(FString Message);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable)//start a new game resetting points
+	void ResetPointsAndGame();
+
+	UFUNCTION(BlueprintCallable)//start a new game without resetting points
 	void ResetGame();
 private:
 	// score value for human players

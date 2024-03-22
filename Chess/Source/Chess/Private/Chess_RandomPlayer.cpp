@@ -63,7 +63,7 @@ void AChess_RandomPlayer::MakeRandomMove() {
 	do {
 		randomPieceIndx = FMath::Rand() % piecesNumber;
 		if (!actualIsVisited[randomPieceIndx]) {
-			possibleMoves = Board->GetFeasibleMoves(actualPiece[randomPieceIndx], false);
+			possibleMoves = Board->GetFeasibleSquares(actualPiece[randomPieceIndx], false);
 			numSize = possibleMoves.Num();
 			actualIsVisited[randomPieceIndx] = true;
  		}
@@ -72,10 +72,12 @@ void AChess_RandomPlayer::MakeRandomMove() {
 	if (bMyTurn) {
 		if (numSize != 0)
 		{
-			int32 randomMove = FMath::Rand() % numSize;
-			FVector2D newLoc = possibleMoves[randomMove];
+			int32 randomMoveIndx = FMath::Rand() % numSize;
+			FVector2D newLoc = possibleMoves[randomMoveIndx];
 			FVector2D oldLoc = *Board->GetXYFromPiece(actualPiece[randomPieceIndx]);
-			Board->MakeAMove(oldLoc, newLoc, false);
+			TSharedPtr<Chess_Move> randomMove = MakeShareable(new Chess_Move(oldLoc, newLoc, Board));
+			Board->MakeAMove(randomMove, false);
+			//Chess_Move succMove = Chess_Move(oldLoc, newLoc);
 		}
 		else
 		{

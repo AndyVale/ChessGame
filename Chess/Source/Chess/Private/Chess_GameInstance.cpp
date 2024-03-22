@@ -49,12 +49,15 @@ void UChess_GameInstance::SetTurnMessage(FString Message)
 	CurrentTurnMessage = Message;
 }
 
+void UChess_GameInstance::ResetPointsAndGame()
+{
+	ScoreAIPlayer = 0;
+	ScoreHumanPlayer = 0;
+	UpdateScoreSignal();
+	ResetSignal();
+}
+
 void UChess_GameInstance::ResetGame()
 {
-	//ScoreAIPlayer = 0;
-	//ScoreHumanPlayer = 0;
-	ScoreAIPlayer = FMath::Rand();
-	ScoreHumanPlayer = FMath::Rand();
-	UpdateScoreSignal();
 	ResetSignal();
 }

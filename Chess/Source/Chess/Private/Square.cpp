@@ -57,6 +57,11 @@ bool ASquare::IsDanger()
 	return (SquareMesh->GetMaterial(0) == DangerMaterial);
 }
 
+void ASquare::InReplay()
+{
+	SquareMesh->SetMaterial(0, ReplayMaterial);
+}
+
 /* Called every frame
 void ASquare::Tick(float DeltaTime)
 {

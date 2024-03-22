@@ -10,6 +10,8 @@
 #include "Chess_PlayerInterface.h"
 #include "Chess_GameMode.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerSwap);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReplayMove, int32, MoveNumber);
 
 UCLASS()
 class CHESS_API AChess_GameMode : public AGameModeBase
@@ -20,15 +22,26 @@ class CHESS_API AChess_GameMode : public AGameModeBase
 	~AChess_GameMode();
 
 	virtual void BeginPlay() override;
+
 	UFUNCTION()
 	void ChoosePlayerAndStartGame();
 
 public:
+	UPROPERTY(BlueprintAssignable)
+	FOnPlayerSwap OnPlayerSwap;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnReplayMove OnReplayMove;
+
+	void ReplayMove(int32 moveNumber);
 
 	bool IsGameOver=false;
 
 	void TurnNextPlayer();
 	TArray<IChess_PlayerInterface*> Players;
+
+	int32 TurnNumber = 1;
+	int32 MoveNumber = 1;
 
 	// reference to a GameField object
 	UPROPERTY(VisibleAnywhere)
@@ -44,6 +57,8 @@ private:
 
 	bool ControlStall();
 
+	UFUNCTION()
+	void ResetHandler();
 
-	int32 CurrentPlayer;
+	int32 CurrentPlayer=0;
 };
