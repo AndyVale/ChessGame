@@ -32,20 +32,24 @@ public:
 
 	AChessboard* ReferredBoard;
 
+	bool bPromotionAfterMove = false;//setted by constructor if the moved piece is a pawn and reaches end of the board
+
 	Chess_Move(FVector2D f, FVector2D t, AChessboard* board);
 
 	void MakeMove(bool simulate);
 	void RollbackMove(bool simulate);
 
+	void PromotePawn(bool simulate, TSubclassOf<AChessPiece> selectedPiece);//promote the pawn, if selectedPiece is null the method uses PawnPromotionAusRef as input
+
 	FString ToString() const;
 	ChessColor GetMoveColor() const;
 	~Chess_Move();
 private:
-	FString PieceLetter;
-	FString GetPieceLetter();
+	//FString PieceLetter;
+	static FString GetPieceLetter(AChessPiece* piece);
 
 	void CalculateResult();
-	//static bool CalculateCheck(FVector2D f, FVector2D t, AChessboard* board);
-	//static bool CalculateMate(FVector2D f, FVector2D t, AChessboard* board);
-	//static bool CalculateStall(FVector2D f, FVector2D t, AChessboard* board);
+
+	AChessPiece* PawnPromotionAusRef = nullptr;//aus variable for rollback purpose
+	void PromoteRollbackPawn(bool simulate);
 };

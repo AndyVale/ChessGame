@@ -11,14 +11,19 @@
 #include "CP_Queen.h"
 #include "CP_Rook.h"
 
-Chess_Move::Chess_Move(FVector2D f, FVector2D t, AChessboard* board) : From(f), To(t), ReferredBoard(board)
+Chess_Move::Chess_Move(FVector2D f, FVector2D t, AChessboard* board) : PlayerOnCheck(ChessColor::NAC), PlayerOnCheckMate(ChessColor::NAC), PlayerOnStall(ChessColor::NAC), From(f), To(t), ReferredBoard(board)
 {
-    PlayerOnCheck = ChessColor::NAC;		
-    PlayerOnCheckMate = ChessColor::NAC;
-    PlayerOnStall = ChessColor::NAC;
     PieceFrom = board->GetPieceFromXY(f);
     PieceTo = board->GetPieceFromXY(t);
-    PieceLetter = GetPieceLetter();
+    //PieceLetter = GetPieceLetter(PieceFrom);
+    //if the piece get the opposite end of the board
+    if (GetMoveColor() == ChessColor::WHITE && To.Y == ReferredBoard->BoardSize - 1 || GetMoveColor() == ChessColor::BLACK && To.Y == 0)
+    {
+        if (ACP_Pawn* pawn = Cast<ACP_Pawn>(PieceFrom))//and is a pawn->needs a promotion
+        {
+            bPromotionAfterMove = true;
+        }
+    }
 }
 
 void Chess_Move::CalculateResult()
@@ -81,6 +86,10 @@ void Chess_Move::MakeMove(bool simulate)
     }
 
     //CalculateResult test for check, checkmate and stall. Is importat to avoid this procedure in case it's a simulative move (for performance reasons)
+    if (bPromotionAfterMove)
+    {
+        PromotePawn(simulate, nullptr);
+    }
     if (!simulate)
     {
         CalculateResult();
@@ -90,6 +99,10 @@ void Chess_Move::MakeMove(bool simulate)
 
 void Chess_Move::RollbackMove(bool simulate)
 {
+    if (bPromotionAfterMove && PawnPromotionAusRef)//if move was a promotion and was already done
+    {
+        PromoteRollbackPawn(simulate);
+    }
     ReferredBoard->SetPieceFromXY(To, PieceTo);
     ReferredBoard->SetPieceFromXY(From, PieceFrom);
     if (!simulate) {
@@ -98,9 +111,75 @@ void Chess_Move::RollbackMove(bool simulate)
             PieceTo->SetActorHiddenInGame(false);
             PieceTo->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(To[0], To[1]));
         }
-        PieceFrom->SetActorHiddenInGame(false);
-        PieceFrom->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(From[0], From[1]));
+        if(PieceFrom)
+        {
+            PieceFrom->SetActorHiddenInGame(false);
+            PieceFrom->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(From[0], From[1]));
+        }
         //rimetti in gioco la pedina mangiata
+    }
+}
+
+void Chess_Move::PromotePawn(bool simulate, TSubclassOf<AChessPiece> selectedPiece)
+{
+    if (selectedPiece != nullptr)//first promotion (not executed if is a replay)
+    {
+        FVector position = ReferredBoard->GetRelativeLocationByXYPosition(To.X, To.Y) + FVector(0, 0, 20);
+        FRotator rotation = FRotator(0, 180, 0);
+        ChessColor pColor = GetMoveColor();
+        if (PawnPromotionAusRef != nullptr) {//never reached (in theory)
+            PawnPromotionAusRef->Destroy();
+        }
+        PawnPromotionAusRef = ReferredBoard->GetWorld()->SpawnActor<AChessPiece>(selectedPiece, position, rotation);
+        PawnPromotionAusRef->SetColorAndMaterial(pColor);
+        PawnPromotionAusRef->SetActorHiddenInGame(true);
+    }
+
+    if (PawnPromotionAusRef) {//swap pieces
+        AChessPiece* swapVar = PieceFrom;
+        if (!simulate) {//show the effective piece
+            PieceFrom->SetActorHiddenInGame(true);
+            PawnPromotionAusRef->SetActorHiddenInGame(false);
+            PieceFrom->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(-1, -1));//Move chesspiece away from chessboard to avoid fake click
+        }
+
+        ReferredBoard->RemovePiece(PieceFrom);
+        PieceFrom = PawnPromotionAusRef;
+        PawnPromotionAusRef = swapVar;
+        ReferredBoard->SetPieceFromXY(To, PieceFrom);
+    }
+    CalculateResult();//update attributes for "toString" method
+}
+
+void Chess_Move::PromoteRollbackPawn(bool simulate)
+{
+    //if (simulate) return;
+
+    if (PawnPromotionAusRef == nullptr)
+    {
+        UE_LOG(LogTemp, Error, TEXT("PromoteRollbackPawn:Impossible rollback, no promoted piece found"));
+        return;
+    }
+    if (!ReferredBoard->GetXYFromPiece(PieceFrom))
+    {
+        return;
+    }
+    //swap pieces:
+    AChessPiece* swapVar = PieceFrom;
+    ReferredBoard->RemovePiece(PieceFrom);
+    PieceFrom = PawnPromotionAusRef;
+    PawnPromotionAusRef = swapVar;
+    ReferredBoard->SetPieceFromXY(To, PieceFrom);
+
+    if (!simulate)
+    {
+        PieceFrom->SetActorHiddenInGame(false);
+        PieceFrom->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(To[0], To[1]));//put the piece in the position
+        PawnPromotionAusRef->SetActorHiddenInGame(true);
+    }
+    else {//if was a simulate move destory the promoted piece to avoid memory leak (TODO: controlla se unreal lo fa già da solo)
+        UE_LOG(LogTemp, Error, TEXT("Distruggo la regina swag"));
+        PawnPromotionAusRef->Destroy();
     }
 }
 
@@ -110,7 +189,7 @@ FString Chess_Move::ToString() const
     FString Columns = "hgfedcba";
     FString Rows = "12345678";
     // Converti le coordinate 'From' e 'To' in notazione algebrica
-    AlgebraicNotation += PieceLetter;
+    AlgebraicNotation += PawnPromotionAusRef==nullptr? GetPieceLetter(PieceFrom): GetPieceLetter(PawnPromotionAusRef);
     AlgebraicNotation += Columns[From.X];
     AlgebraicNotation += Rows[From.Y];
     if (PieceTo != nullptr)//eat
@@ -122,6 +201,9 @@ FString Chess_Move::ToString() const
     }
     AlgebraicNotation += Columns[To.X];
     AlgebraicNotation += Rows[To.Y];
+    
+    AlgebraicNotation += PawnPromotionAusRef != nullptr ? "=" + GetPieceLetter(PieceFrom) : "";//for pawn promotion TODO: controlla se è giusta la notazione
+
     if (PlayerOnCheck != NAC)
     {
         if (PlayerOnCheckMate == NAC)//it's only a check
@@ -133,14 +215,11 @@ FString Chess_Move::ToString() const
             AlgebraicNotation += '#';
         }
     }
-
     return AlgebraicNotation;
 }
 
 ChessColor Chess_Move::GetMoveColor() const
 {
-    UE_LOG(LogTemp, Error, TEXT("MoveColor"));
-
     if (PieceFrom)
     {
         return PieceFrom->PieceColor;
@@ -152,24 +231,24 @@ Chess_Move::~Chess_Move()
 {
 }
 
-FString Chess_Move::GetPieceLetter()
+FString Chess_Move::GetPieceLetter(AChessPiece* piece)
 {
-    if (const ACP_Bishop* tmp = Cast<ACP_Bishop>(PieceFrom)) {
+    if (const ACP_Bishop* tmp = Cast<ACP_Bishop>(piece)) {
         return FString("B");
     }
-    if (const ACP_King* tmp = Cast<ACP_King>(PieceFrom)) {
+    if (const ACP_King* tmp = Cast<ACP_King>(piece)) {
         return FString("K");
     }
-    if (const ACP_Knight* tmp = Cast<ACP_Knight>(PieceFrom)) {
+    if (const ACP_Knight* tmp = Cast<ACP_Knight>(piece)) {
         return FString("N");
     }
-    if (const ACP_Pawn* tmp = Cast<ACP_Pawn>(PieceFrom)) {
+    if (const ACP_Pawn* tmp = Cast<ACP_Pawn>(piece)) {
         return FString("");
     }
-    if (const ACP_Queen* tmp = Cast<ACP_Queen>(PieceFrom)) {
+    if (const ACP_Queen* tmp = Cast<ACP_Queen>(piece)) {
         return FString("Q");
     }
-    if (const ACP_Rook* tmp = Cast<ACP_Rook>(PieceFrom)) {
+    if (const ACP_Rook* tmp = Cast<ACP_Rook>(piece)) {
         return FString("R");
     }
     return FString("");

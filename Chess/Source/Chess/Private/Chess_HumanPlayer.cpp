@@ -102,16 +102,18 @@ void AChess_HumanPlayer::OnClick()
             Cast<AChessPiece>(Hit.GetActor()) ? CurrClicked = Cast<AChessPiece>(Hit.GetActor()) : CurrClicked = Cast<ASquare>(Hit.GetActor());
             FVector2D oldLoc = Board->GetXYPositionByRelativeLocation(SelectedPiece->GetActorLocation());
             FVector2D newLoc = Board->GetXYPositionByRelativeLocation(CurrClicked->GetActorLocation());
-
-            if (CurrClicked && Board->MakeASafeMove(oldLoc, newLoc))
+            TSharedPtr<Chess_Move> move = MakeShareable(new Chess_Move(oldLoc, newLoc, Board));
+            if (CurrClicked && Board->MakeASafeMove(move))
             {//if MakeASafeMove return the move is done, otherwise the piece is deselected
-               // Chess_Move succMove = Chess_Move(oldLoc, newLoc);
+                GameMode->UpdateLastMove(move);
                 bIsMyTurn = false;
             }
             Board->CancelFeasibleSquares();
             SelectedPiece = nullptr;
             if (!bIsMyTurn)
+            {
                 GameMode->TurnNextPlayer();
+            }
         }
     }
 }

@@ -68,14 +68,14 @@ void AChess_RandomPlayer::MakeRandomMove() {
 			actualIsVisited[randomPieceIndx] = true;
  		}
 	} while (numSize == 0 && actualIsVisited.Find(false) != INDEX_NONE);//get a piece that can be moved
-
+	TSharedPtr<Chess_Move> randomMove = nullptr;
 	if (bMyTurn) {
 		if (numSize != 0)
 		{
 			int32 randomMoveIndx = FMath::Rand() % numSize;
 			FVector2D newLoc = possibleMoves[randomMoveIndx];
 			FVector2D oldLoc = *Board->GetXYFromPiece(actualPiece[randomPieceIndx]);
-			TSharedPtr<Chess_Move> randomMove = MakeShareable(new Chess_Move(oldLoc, newLoc, Board));
+			randomMove = MakeShareable(new Chess_Move(oldLoc, newLoc, Board));
 			Board->MakeAMove(randomMove, false);
 			//Chess_Move succMove = Chess_Move(oldLoc, newLoc);
 		}
@@ -83,7 +83,16 @@ void AChess_RandomPlayer::MakeRandomMove() {
 		{
 			//STALLO
 		}
+		if (randomMove && randomMove->bPromotionAfterMove) {
+			TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
+			int32 randomPromotionIndx = FMath::Rand() % randomPromotedPiece.Num();
+			Board->PromoteLastMove(randomPromotedPiece[randomPromotionIndx]);
+		}
+		if (randomMove) {
+			GameMode->UpdateLastMove(randomMove);//notify the HUD of the move
+		}
 	}
+
 	bMyTurn = false;
 	GameMode->TurnNextPlayer();
 }

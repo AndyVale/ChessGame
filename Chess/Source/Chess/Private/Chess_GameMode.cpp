@@ -62,7 +62,8 @@ void AChess_GameMode::BeginPlay()
 void AChess_GameMode::ChoosePlayerAndStartGame()
 {
 	IsGameOver = false;
-	Players[0]->OnTurn();
+	Players[0]->Color == ChessColor::WHITE ? Players[0]->OnTurn() : Players[1]->OnTurn();
+	//Players[0]->OnTurn();
 }
 
 void AChess_GameMode::ToggleCurrentPlayer()
@@ -77,6 +78,40 @@ void AChess_GameMode::ToggleCurrentPlayer()
 	OnPlayerSwap.Broadcast();
 }
 
+void AChess_GameMode::UpdateLastMove(TSharedPtr<Chess_Move> move)
+{
+	if (move)
+	{
+		const FString moveString = move->ToString();
+		OnMoveUpdate.Execute(moveString, MoveNumber);
+	}
+}
+
+void AChess_GameMode::ShowPromotionWidget(ChessColor playerColor)
+{
+	if (playerColor == Players[0]->Color) {//if is the human player
+		OnShowPromotionWidget.Execute(playerColor);
+		bMustSelectPiecePromotion = true;
+	}
+}
+
+void AChess_GameMode::SelectedPawnPromotionHandler(CP ChessPieceEnum)
+{
+	TSharedPtr<Chess_Move> move = Board->PromoteLastMove(ChessPieceEnum);
+	UpdateLastMove(move);//write the promotion in the storyboard
+	bMustSelectPiecePromotion = false;
+	if (ControlChecks())//debug
+	{
+		IsGameOver = true;
+		CurrentPlayer == 0 ? Players[1]->OnWin() : Players[0]->OnWin();
+	}
+	else if (ControlStall())
+	{
+		IsGameOver = true;
+	}
+	TurnNextPlayer();
+}
+
 void AChess_GameMode::ReplayMove(int32 moveNumber)
 {
 	OnReplayMove.Broadcast(moveNumber);
@@ -84,27 +119,32 @@ void AChess_GameMode::ReplayMove(int32 moveNumber)
 
 void AChess_GameMode::TurnNextPlayer()
 {
-	ToggleCurrentPlayer();
-	if (!IsGameOver)
+	if (!bMustSelectPiecePromotion)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cambio turno"));
-		Board->RestoreBoardColors();
-		Players[CurrentPlayer]->OnTurn();
-
-		if(ControlChecks())//debug
+		//Board->OnMove.Broadcast(Board->ToString());//TODO: Update pawn promotion 
+		ToggleCurrentPlayer();
+		if (!IsGameOver)
 		{
-			IsGameOver = true;
-		}
-		else if (ControlStall())
-		{
-			IsGameOver = true;
-		}
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cambio turno"));
+			Board->RestoreBoardColors();
+			Players[CurrentPlayer]->OnTurn();
+			UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 
-		//IsGameOver = mate ? mate : ControlStall();//first check for mate, then for stall
-	}
-	else
-	{
-		Players[CurrentPlayer]->OnWin();
+			if (ControlChecks())//debug
+			{
+				IsGameOver = true;
+				//ToggleCurrentPlayer();
+				CurrentPlayer == 0 ? Players[1]->OnWin() : Players[0]->OnWin();
+				
+				//ToggleCurrentPlayer();
+			}
+			else if (ControlStall())
+			{
+				IsGameOver = true;
+			}
+
+			//IsGameOver = mate ? mate : ControlStall();//first check for mate, then for stall
+		}
 	}
 }
 
@@ -116,8 +156,9 @@ bool AChess_GameMode::ControlChecks() //TODO: Stall check
 	if (Board->GetKingPosition(colorToControl)) {
 		if (Board->CheckControl(colorToControl)) {
 			if (Board->MateControl(colorToControl)) {
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("--------MATTO!!--------"));
+				//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("--------MATTO!!--------"));
 				UE_LOG(LogTemp, Error, TEXT("--------MATTO!!--------"));
+				
 				mate = true;
 			}
 			if (Board->GetSquareFromXY(*Board->GetKingPosition(colorToControl)))
@@ -136,7 +177,7 @@ bool AChess_GameMode::ControlStall()
 	colorToControl = CurrentPlayer == 0 ? WHITE : BLACK;
 	bool stall = Board->StallControl(colorToControl);
 	if (stall) {
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("--------STALLO!!--------"));
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("--------STALLO!!--------"));
 		UE_LOG(LogTemp, Error, TEXT("--------STALLO!!--------"));
 	}
 	return stall;

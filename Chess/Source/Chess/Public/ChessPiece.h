@@ -7,7 +7,6 @@
 #include "GameFramework/Actor.h"
 #include "ChessPiece.generated.h"
 
-
 UCLASS(Abstract)
 class CHESS_API AChessPiece : public AActor
 {

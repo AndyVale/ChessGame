@@ -15,9 +15,18 @@ enum ChessColor {
 	NAC,
 };
 
+UENUM()
+enum CP {
+	BISHOP,
+	KING,
+	KNIGHT,
+	PAWN,
+	QUEEN,
+	ROOK
+};
+
 class AChessPiece;
 //TODO: Use chess_move class: move delegate in chess_move and make a move and rollback (keep the interface but move the logic)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMove, const FString, MovePerformed);
 
 UCLASS()
 class CHESS_API AChessboard : public AActor
@@ -28,12 +37,9 @@ public:
 	// Sets default values for this actor's properties
 	AChessboard();
 
-	TSharedPtr<Chess_Move> PopLastMove();
+	//TSharedPtr<Chess_Move> PopLastMove();
 
 	TMap<AChessPiece*, FVector2D> GetPieces(ChessColor C);
-
-	UPROPERTY(BlueprintAssignable)
-	FOnMove OnMove;//every player must broadcast when a move is successfully performed
 
 	UFUNCTION()
 	void ResetBoard();
@@ -63,6 +69,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	float SquareSize;
 
+	//promote the piece in last move with the corrispondent chesspiece. returns a pointer to the updated move
+	TSharedPtr<Chess_Move> PromoteLastMove(CP ChessPieceEnum);
+
 	bool CheckControl(ChessColor C);
 	
 	bool MateControl(ChessColor C);
@@ -71,7 +80,7 @@ public:
 
 	FVector2D* GetKingPosition(ChessColor C);
 
-	bool MakeASafeMove(FVector2D, FVector2D);
+	bool MakeASafeMove(TSharedPtr<Chess_Move> move);
 
 	void MakeAMove(TSharedPtr<Chess_Move> move, bool simulate);
 

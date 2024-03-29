@@ -11,6 +11,7 @@
 #include "Components/HorizontalBox.h"
 #include "Components/TextBlock.h"
 #include "Components/ScrollBox.h"
+#include "Chess_PawnPromotionWidget.h"
 //#include "Components/ListView.h"
 #include "Chess_UserWidget.generated.h"
 
@@ -47,8 +48,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UScrollBox* StoryBoardScrollBox;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UChess_PawnPromotionWidget* PawnPromotionWidget;
+
 	UFUNCTION()
 	void ReplayMove(int32 moveNumber);
+
+	UFUNCTION()
+	void SetPromotionWidgetVisible(ChessColor playerColor);
 
 	void RemoveLastMove();
 private:
@@ -71,7 +78,7 @@ private:
 	void ResetHandler();
 
 	UFUNCTION()
-	void MoveHandler(FString stringMove);
+	void MoveHandler(FString stringMove, int32 moveNumber);
 
 	//Note: Button click is handled in Chess_StoryBoardEntry
 	

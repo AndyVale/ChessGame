@@ -10,6 +10,9 @@
 #include "Chess_PlayerInterface.h"
 #include "Chess_GameMode.generated.h"
 
+DECLARE_DELEGATE_OneParam(FOnShowPromotionWidget, ChessColor);
+DECLARE_DELEGATE_TwoParams(FOnMoveUpdate, const FString, int32);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerSwap);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReplayMove, int32, MoveNumber);
 
@@ -33,8 +36,19 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnReplayMove OnReplayMove;
 
-	void ReplayMove(int32 moveNumber);
+	FOnShowPromotionWidget OnShowPromotionWidget;
+	FOnMoveUpdate OnMoveUpdate;//TODO: Add binding and put in gamemode(?)
+	
+	//method that notify the HUD to update storyboard with the new move or update the already written move
+	void UpdateLastMove(TSharedPtr<Chess_Move> move);
 
+	//Aggiungere delegato per la mossa in stringa. Il delgato deve avere 2 parametri (stringa e intero nMossa). Viene richiamato attraverso una funzione che ha come parametro la mossa (verrà invocata dai player)
+	void ShowPromotionWidget(ChessColor playerColor);
+
+	void SelectedPawnPromotionHandler(CP ChessPieceEnum);
+
+	void ReplayMove(int32 moveNumber);
+	
 	bool IsGameOver=false;
 
 	void TurnNextPlayer();
@@ -60,5 +74,7 @@ private:
 	UFUNCTION()
 	void ResetHandler();
 
-	int32 CurrentPlayer=0;
+	int32 CurrentPlayer = 0;
+	bool bMustSelectPiecePromotion = false;
+
 };

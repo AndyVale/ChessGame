@@ -22,6 +22,7 @@ void UChess_UserWidget::NativeConstruct()
                 CurrentPlayerText->SetText(FText::FromString("White turn"));
             }
             GameMode->OnPlayerSwap.AddDynamic(this, &UChess_UserWidget::ShowPlayerHandler);
+            GameMode->OnShowPromotionWidget.BindUObject(this, &UChess_UserWidget::SetPromotionWidgetVisible);
         }
     }
 
@@ -36,10 +37,13 @@ void UChess_UserWidget::NativeConstruct()
     }
     if (StoryBoardScrollBox)
     {
-        if (GameMode && GameMode->Board)
+        if (GameMode)
         {
-            GameMode->Board->OnMove.AddDynamic(this, &UChess_UserWidget::MoveHandler);
+            GameMode->OnMoveUpdate.BindUObject(this, &UChess_UserWidget::MoveHandler);
         }
+    }
+    if (PawnPromotionWidget) {
+        PawnPromotionWidget->SetVisibility(ESlateVisibility::Hidden);
     }
 }
 
@@ -51,6 +55,16 @@ void UChess_UserWidget::ReplayMove(int32 moveNumber)
     //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("At turn n: %d"), turnNumber));
     if (AChess_GameMode* GameModeRef = Cast<AChess_GameMode>(UGameplayStatics::GetGameMode(GetWorld()))) {
         GameModeRef->OnReplayMove.Broadcast(moveNumber);
+    }
+}
+
+void UChess_UserWidget::SetPromotionWidgetVisible(ChessColor playerColor)
+{
+        
+    FLinearColor color = playerColor == ChessColor::WHITE ? FLinearColor(999, 999, 999) : FLinearColor(FVector(0, 0, 0));
+    if (PawnPromotionWidget) {
+        PawnPromotionWidget->SetVisibility(ESlateVisibility::Visible);
+        PawnPromotionWidget->SetColorAndOpacity(color);
     }
 }
 
@@ -105,43 +119,34 @@ void UChess_UserWidget::ResetHandler() {
     }
 }
 
-void UChess_UserWidget::MoveHandler(FString stringMove)
+void UChess_UserWidget::MoveHandler(FString stringMove, int32 moveNumber)
 {
-    UChess_StoryBoardEntry* lastTurnRow;
-    if (TurnsHistory.Num() > 0)//if is not the first move
-    {
-        lastTurnRow = TurnsHistory.Last();//get the last couple of moves
-    }
-    else {
-        lastTurnRow = CreateWidget<UChess_StoryBoardEntry>(GetWorld(), StoryBoardEntry);//else create a new couple
-    }
-
-    //if all the move are 
-    if (lastTurnRow->bWhiteMoveDone && !lastTurnRow->bBlackMoveDone)
-    {//just add black move
-        lastTurnRow->SetBlackMoveText(stringMove);
-        lastTurnRow->BlackBackButton->OnClicked.AddDynamic(lastTurnRow, &UChess_StoryBoardEntry::BlackButtonClickHandler);
+    //Get the textbox:
+    UChess_StoryBoardEntry* moveTurnEntry;
+    if (TurnsHistory.Num() * 2 >= moveNumber)//2 moves in each turn
+    {//no need to create new turn entry
+        moveTurnEntry = TurnsHistory[(moveNumber - 1)/ 2];
     }
     else
-    {//add replay button, turn number and white move
-        lastTurnRow = CreateWidget<UChess_StoryBoardEntry>(GetWorld(), StoryBoardEntry);//create new row
-        //lastTurnRow->HudRef = this;
-        lastTurnRow->WhiteBackButton->OnClicked.AddDynamic(lastTurnRow, &UChess_StoryBoardEntry::WhiteButtonClickHandler);
+    {//create a new entry
+        moveTurnEntry = CreateWidget<UChess_StoryBoardEntry>(GetWorld(), StoryBoardEntry);
         if (StoryBoardScrollBox)//add to scrollbox
         {
-            StoryBoardScrollBox->AddChild(lastTurnRow);
+            StoryBoardScrollBox->AddChild(moveTurnEntry);
             StoryBoardScrollBox->ScrollToEnd();
         }
-
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, stringMove);//new turn and white move
+        TurnsHistory.Add(moveTurnEntry);
         if (GameMode)
         {
-            lastTurnRow->SetTurnNumberText(FString::Printf(TEXT("%d"), GameMode->TurnNumber));
+            moveTurnEntry->SetTurnNumberText(FString::Printf(TEXT("%d"), GameMode->TurnNumber));
         }
-        lastTurnRow->SetWhiteMoveText(stringMove);
-
-        TurnsHistory.Add(lastTurnRow);
     }
+    UButton* selectedButton = (moveNumber - 1) % 2 == 0 ? moveTurnEntry->WhiteBackButton : moveTurnEntry->BlackBackButton;
+    if (selectedButton && !selectedButton->OnClicked.IsBound())
+    {
+        (moveNumber - 1) % 2 == 0 ? selectedButton->OnClicked.AddDynamic(moveTurnEntry, &UChess_StoryBoardEntry::WhiteButtonClickHandler) : selectedButton->OnClicked.AddDynamic(moveTurnEntry, &UChess_StoryBoardEntry::BlackButtonClickHandler);
+    }
+    (moveNumber - 1) % 2 == 0 ? moveTurnEntry->SetWhiteMoveText(stringMove) : moveTurnEntry->SetBlackMoveText(stringMove);
 }
 
 void UChess_UserWidget::ShowPlayerHandler()

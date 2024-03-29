@@ -282,7 +282,7 @@ void AChessboard::GenerateField()
 
 void AChessboard::RemovePiece(AChessPiece* p)
 {
-	if (p)
+	if (p)//TODO: Quando gli passo la regina del pezzo promosso non trova nulla.
 	{
 		FVector2D* xy = GetXYFromPiece(p);
 		if (xy && GetSquareFromXY(*xy))
@@ -322,6 +322,29 @@ FVector2D AChessboard::GetXYPositionByRelativeLocation(const FVector& Location) 
 	const double y = Location[1] / SquareSize;
 	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("x=%f,y=%f"), x, y));
 	return FVector2D(x, y);
+}
+
+TSharedPtr<Chess_Move> AChessboard::PromoteLastMove(CP ChessPieceEnum)
+{
+	TSubclassOf<AChessPiece> selectedClass = nullptr;
+	switch (ChessPieceEnum) {
+	case CP::KNIGHT:
+		selectedClass = Knight;
+		break;
+	case CP::ROOK:
+		selectedClass = Rook;
+		break;
+	case CP::BISHOP:
+		selectedClass = Bishop;
+		break;
+	case CP::QUEEN:
+		selectedClass = Queen;
+		break;
+	default:
+		UE_LOG(LogTemp, Error, TEXT("PromoteLastMove: Unexpected CP enum value"));
+	}
+	StackMoves.Top()->PromotePawn(false, selectedClass);
+	return StackMoves.Top();
 }
 
 bool AChessboard::CheckControl(ChessColor C)
@@ -398,10 +421,10 @@ bool AChessboard::MateControl(ChessColor C)
 			TSharedPtr<Chess_Move> tmpMove = MakeShareable(new Chess_Move(oldPos, newPos, this));
 			MakeAMove(tmpMove, true);
 			if (!CheckControl(C)) {
-				RollbackMove(tmpMove, false);
+				RollbackMove(tmpMove, true);
 				return false;
 			}
-			RollbackMove(tmpMove, false);
+			RollbackMove(tmpMove, true);
 		}
 	}
 	return true;
@@ -438,13 +461,14 @@ FVector2D* AChessboard::GetKingPosition(ChessColor C)
 	return nullptr;
 }
 
-bool AChessboard::MakeASafeMove(FVector2D oldPosition, FVector2D newPosition)
+bool AChessboard::MakeASafeMove(TSharedPtr<Chess_Move> move)
 {
+	FVector2D oldPosition = move->From;
+	FVector2D newPosition = move->To;
 	if (GetSquareFromXY(newPosition) && GetSquareFromXY(newPosition)->IsSelected())
 	{
 		if (GetPieceFromXY(newPosition) != GetPieceFromXY(oldPosition))
 		{
-			TSharedPtr<Chess_Move> move = MakeShareable(new Chess_Move(oldPosition, newPosition, this));
 			MakeAMove(move, false);
 			return true;
 		}
@@ -455,19 +479,18 @@ bool AChessboard::MakeASafeMove(FVector2D oldPosition, FVector2D newPosition)
 void AChessboard::MakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 {
 	move->MakeMove(simulate);
-	//CANNOT CalculateResult HERE FOR RECURSION PROBLEM
-	/*if (CheckControl(move.GetMoveColor() == WHITE ? BLACK : WHITE))
-{
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("CHECK!"));
-	if (MateControl(move.GetMoveColor() == WHITE ? BLACK : WHITE))
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("MATE!"));
-	}
-}*/
+
 	if (!simulate)
 	{
 		StackMoves.Push(move);
-		OnMove.Broadcast(move->ToString());
+		//OnMove.Broadcast(move->ToString());
+
+		if (move->bPromotionAfterMove) {
+			UE_LOG(LogTemp, Error, TEXT("Spawn HUD"));
+			if (AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode())) {
+				GameMode->ShowPromotionWidget(move->GetMoveColor());
+			}
+		}
 	}
 }
 
@@ -500,7 +523,7 @@ void AChessboard::FilterMovesAvoidCheck(AChessPiece* p, TArray<FVector2D>& moves
 			moves.Remove(newPos);
 			i--;
 		}
-		RollbackMove(tmpMove, false);
+		RollbackMove(tmpMove, true);
 	}
 }
 
