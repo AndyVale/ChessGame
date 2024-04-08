@@ -12,12 +12,13 @@ UCLASS()
 class CHESS_API ASquare : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	ASquare();
 	// Sets the color (black or white) of the square
 	void setPiece(AChessPiece* p);
+	bool bIsSelected = false;
 
 	AChessPiece* getPiece();
 
@@ -39,7 +40,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
 	AChessPiece* PieceOn;
 
@@ -65,7 +66,7 @@ protected:
 	UMaterialInstance* ReplayMaterial;
 	//bool bIsSelected;
 
-public:	
+public:
 	// Called every frame
 	//virtual void Tick(float DeltaTime) override;
 

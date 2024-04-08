@@ -9,3 +9,9 @@ TArray<FVector2D> ACP_Bishop::GetPieceMoves(FVector2D* xy, AChessboard* Board)
     GetFeasibleDiagonals(xy, Board, moves);
     return moves;
 }
+
+float ACP_Bishop::GetPieceValue()
+{
+    return 30.0f;
+}
+

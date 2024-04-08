@@ -19,6 +19,7 @@ enum ChessColor;
 class CHESS_API Chess_Move
 {
 public:
+	float MoveValue;
 	//attributes modified after the move is done, defaults NAC (not a color)
 	ChessColor PlayerOnCheck;		//if the move make opponent's king on check the color of the opponent is saved
 	ChessColor PlayerOnCheckMate;	//if the move make opponent's king on mate the color of the opponent is saved
@@ -52,4 +53,6 @@ private:
 
 	AChessPiece* PawnPromotionAusRef = nullptr;//aus variable for rollback purpose
 	void PromoteRollbackPawn(bool simulate);
+
+	float MoveValueCalculation();//higher value = best move for white; lower value = best move for black;
 };

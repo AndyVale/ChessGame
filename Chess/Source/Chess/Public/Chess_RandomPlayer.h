@@ -19,7 +19,7 @@ public:
 	void MakeRandomMove();
 
 	UFUNCTION()//ResetHandler and bMyTurn are workaround, remove it before last commit 
-	void ResetHandler();
+		void ResetHandler();
 	bool bMyTurn = false;
 
 	ChessColor RandomPColor = BLACK;
@@ -28,12 +28,10 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
-	//virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void OnTurn() override;
 	virtual void OnWin() override;
 	virtual void OnLose() override;
+
+private:
 };

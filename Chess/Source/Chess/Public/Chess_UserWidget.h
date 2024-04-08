@@ -16,7 +16,7 @@
 #include "Chess_UserWidget.generated.h"
 
 /**
- * 
+ *
  */
 
 
@@ -55,6 +55,9 @@ public:
 	void ReplayMove(int32 moveNumber);
 
 	UFUNCTION()
+	void RemoveMovesUntil(int32 moveNumber);
+
+	UFUNCTION()
 	void SetPromotionWidgetVisible(ChessColor playerColor);
 
 	void RemoveLastMove();
@@ -81,7 +84,7 @@ private:
 	void MoveHandler(FString stringMove, int32 moveNumber);
 
 	//Note: Button click is handled in Chess_StoryBoardEntry
-	
+
 	UFUNCTION()
 	void ShowPlayerHandler();
 };

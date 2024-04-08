@@ -3,6 +3,8 @@
 
 #include "CP_Knight.h"
 
+
+
 TArray<FVector2D> ACP_Knight::GetPieceMoves(FVector2D* xy, AChessboard* Board)
 {//TODO:Aggiungere impossibilità di automangiarsi
     TArray<FVector2D> moves = TArray<FVector2D>();
@@ -28,4 +30,22 @@ TArray<FVector2D> ACP_Knight::GetPieceMoves(FVector2D* xy, AChessboard* Board)
     }
 
     return moves;
+}
+
+float ACP_Knight::GetPieceValue()
+{
+    return 30.0f;
+}
+
+float ACP_Knight::GetCorrectedPieceValue()
+{
+    if (PieceColor == ChessColor::WHITE)
+    {
+        return GetPieceValue() + WhiteEvalMatrix[PiecePosition.Y][PiecePosition.X];
+    }
+    if (PieceColor == ChessColor::BLACK)
+    {
+        return GetPieceValue() + BlackEvalMatrix[PiecePosition.Y][PiecePosition.X];
+    }
+    return -1;
 }

@@ -8,7 +8,7 @@
 #include "Chess_PawnPromotionWidget.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class CHESS_API UChess_PawnPromotionWidget : public UUserWidget
@@ -34,7 +34,7 @@ private:
 
 	UFUNCTION()
 	void clickOnRook();
-	
+
 	UFUNCTION()
 	void clickOnQueen();
 

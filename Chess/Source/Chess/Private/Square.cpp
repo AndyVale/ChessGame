@@ -8,7 +8,6 @@
 ASquare::ASquare()
 {
 	PrimaryActorTick.bCanEverTick = false;
-
 	Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
 	SquareMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	SetRootComponent(Scene);
@@ -19,11 +18,13 @@ ASquare::ASquare()
 void ASquare::SetSquareColor(bool c)
 {
 	c ? SquareMesh->SetMaterial(0, WhiteMaterial) : SquareMesh->SetMaterial(0, BlackMaterial);
+	bIsSelected = false;
 }
 
 void ASquare::SetAsSelected()
 {
 	SquareMesh->SetMaterial(0, SelectedMaterial);
+	bIsSelected = true;
 }
 
 void ASquare::setPiece(AChessPiece* p)
@@ -38,6 +39,8 @@ AChessPiece* ASquare::getPiece()
 
 bool ASquare::IsSelected()
 {
+	auto x = SquareMesh->GetMaterial(0);
+	return bIsSelected;
 	return (SquareMesh->GetMaterial(0) == SelectedMaterial);
 }
 

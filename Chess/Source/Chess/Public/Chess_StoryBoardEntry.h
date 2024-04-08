@@ -10,7 +10,7 @@
 #include "Chess_StoryBoardEntry.generated.h"
 
 /**
- * 
+ *
  */
 class UChess_UserWidget;
 

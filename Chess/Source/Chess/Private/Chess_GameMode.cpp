@@ -4,6 +4,8 @@
 #include "Chess_GameMode.h"
 #include "Chess_PlayerController.h"
 #include "Chess_HumanPlayer.h"
+#include "Chess_RandomPlayer.h"
+#include "Chess_MinimaxPlayer.h"
 #include "Square.h"
 #include "Engine.h"
 #include "EngineUtils.h"
@@ -25,7 +27,7 @@ AChess_GameMode::~AChess_GameMode()
 void AChess_GameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	IsGameOver = false;
+	bIsGameOver = false;
 	AChess_HumanPlayer* HumanPlayer = Cast<AChess_HumanPlayer>(*TActorIterator<AChess_HumanPlayer>(GetWorld()));
 
 	if (BoardClass != nullptr)
@@ -38,19 +40,22 @@ void AChess_GameMode::BeginPlay()
 	}
 
 	float CenterOnBoard = (this->Board->SquareSize * (this->Board->BoardSize / 2) - (this->Board->SquareSize / 2));
-	FVector CameraPos(CenterOnBoard - 100, CenterOnBoard, 1000.0f);//TODO: Remove magic numbers
+	FVector CameraPos(CenterOnBoard + 100, CenterOnBoard, 1000.0f);//TODO: Remove magic numbers
 	HumanPlayer->SetActorLocationAndRotation(CameraPos, FRotator::ZeroRotator);
 	FRotator ActorRotation = HumanPlayer->GetActorRotation();
 	ActorRotation.Pitch -= 90;//ruoto verso il basso
-	ActorRotation.Yaw += 90;//in senso orario
+	ActorRotation.Yaw -= 90;//in senso orario
 	HumanPlayer->SetActorRotation(ActorRotation);
 
 	CurrentPlayer = 0;
 
 	Players.Add(HumanPlayer);
 
-	AChess_RandomPlayer* RandomPlayer = GetWorld()->SpawnActor<AChess_RandomPlayer>(FVector(), FRotator());
-	Players.Add(RandomPlayer);
+	//AChess_RandomPlayer* RandomPlayer = GetWorld()->SpawnActor<AChess_RandomPlayer>(FVector(), FRotator());
+	//Players.Add(RandomPlayer);
+
+	AChess_MinimaxPlayer* MinimaxPlayer = GetWorld()->SpawnActor<AChess_MinimaxPlayer>(FVector(), FRotator());
+	Players.Add(MinimaxPlayer);
 
 	if (UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))) {
 		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_GameMode::ResetHandler);
@@ -61,7 +66,7 @@ void AChess_GameMode::BeginPlay()
 
 void AChess_GameMode::ChoosePlayerAndStartGame()
 {
-	IsGameOver = false;
+	bIsGameOver = false;
 	Players[0]->Color == ChessColor::WHITE ? Players[0]->OnTurn() : Players[1]->OnTurn();
 	//Players[0]->OnTurn();
 }
@@ -69,7 +74,8 @@ void AChess_GameMode::ChoosePlayerAndStartGame()
 void AChess_GameMode::ToggleCurrentPlayer()
 {
 	CurrentPlayer++;
-	MoveNumber += 1;
+	NextMoveNumber += 1;
+	NextActualMoveNumber += 1;
 	if (!Players.IsValidIndex(CurrentPlayer))
 	{
 		CurrentPlayer = 0;
@@ -83,7 +89,7 @@ void AChess_GameMode::UpdateLastMove(TSharedPtr<Chess_Move> move)
 	if (move)
 	{
 		const FString moveString = move->ToString();
-		OnMoveUpdate.Execute(moveString, MoveNumber);
+		OnMoveUpdate.Execute(moveString, NextMoveNumber);
 	}
 }
 
@@ -95,6 +101,14 @@ void AChess_GameMode::ShowPromotionWidget(ChessColor playerColor)
 	}
 }
 
+void AChess_GameMode::GoBackToActualMove()
+{
+	NextMoveNumber = NextActualMoveNumber;
+	TurnNumber = (NextActualMoveNumber - 1) % 2 == 0 ? (NextActualMoveNumber - 1) / 2 + 1 : (NextActualMoveNumber - 1) / 2 + 1;
+	bIsOnReplay = false;
+	OnTurnGoBack.Broadcast(NextActualMoveNumber - 1);
+}
+
 void AChess_GameMode::SelectedPawnPromotionHandler(CP ChessPieceEnum)
 {
 	TSharedPtr<Chess_Move> move = Board->PromoteLastMove(ChessPieceEnum);
@@ -102,18 +116,20 @@ void AChess_GameMode::SelectedPawnPromotionHandler(CP ChessPieceEnum)
 	bMustSelectPiecePromotion = false;
 	if (ControlChecks())//debug
 	{
-		IsGameOver = true;
+		bIsGameOver = true;
 		CurrentPlayer == 0 ? Players[1]->OnWin() : Players[0]->OnWin();
 	}
 	else if (ControlStall())
 	{
-		IsGameOver = true;
+		bIsGameOver = true;
 	}
 	TurnNextPlayer();
 }
 
 void AChess_GameMode::ReplayMove(int32 moveNumber)
 {
+	NextActualMoveNumber = moveNumber + 1;
+	bIsOnReplay = (NextActualMoveNumber != NextMoveNumber);
 	OnReplayMove.Broadcast(moveNumber);
 }
 
@@ -123,7 +139,7 @@ void AChess_GameMode::TurnNextPlayer()
 	{
 		//Board->OnMove.Broadcast(Board->ToString());//TODO: Update pawn promotion 
 		ToggleCurrentPlayer();
-		if (!IsGameOver)
+		if (!bIsGameOver)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cambio turno"));
 			Board->RestoreBoardColors();
@@ -132,15 +148,15 @@ void AChess_GameMode::TurnNextPlayer()
 
 			if (ControlChecks())//debug
 			{
-				IsGameOver = true;
+				bIsGameOver = true;
 				//ToggleCurrentPlayer();
 				CurrentPlayer == 0 ? Players[1]->OnWin() : Players[0]->OnWin();
-				
+
 				//ToggleCurrentPlayer();
 			}
 			else if (ControlStall())
 			{
-				IsGameOver = true;
+				bIsGameOver = true;
 			}
 
 			//IsGameOver = mate ? mate : ControlStall();//first check for mate, then for stall
@@ -158,7 +174,7 @@ bool AChess_GameMode::ControlChecks() //TODO: Stall check
 			if (Board->MateControl(colorToControl)) {
 				//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("--------MATTO!!--------"));
 				UE_LOG(LogTemp, Error, TEXT("--------MATTO!!--------"));
-				
+
 				mate = true;
 			}
 			if (Board->GetSquareFromXY(*Board->GetKingPosition(colorToControl)))
@@ -167,7 +183,7 @@ bool AChess_GameMode::ControlChecks() //TODO: Stall check
 			}
 		}
 	}
-	
+
 	return mate;
 }
 
@@ -186,6 +202,6 @@ bool AChess_GameMode::ControlStall()
 void AChess_GameMode::ResetHandler()
 {
 	TurnNumber = 1;
-	MoveNumber = 1;
+	NextMoveNumber = 1;
 	ChoosePlayerAndStartGame();
 }

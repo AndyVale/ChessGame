@@ -64,10 +64,10 @@ public:
 	void SetTurnMessage(FString Message);
 
 	UFUNCTION(BlueprintCallable)//start a new game resetting points
-	void ResetPointsAndGame();
+		void ResetPointsAndGame();
 
 	UFUNCTION(BlueprintCallable)//start a new game without resetting points
-	void ResetGame();
+		void ResetGame();
 private:
 	// score value for human players
 	//UFUNCTION(BlueprintCallable)

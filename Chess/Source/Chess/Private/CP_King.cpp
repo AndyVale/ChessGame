@@ -29,3 +29,11 @@ TArray<FVector2D> ACP_King::GetPieceMoves(FVector2D* xy, AChessboard* Board)
 
     return moves;
 }
+
+float ACP_King::GetPieceValue()
+{
+    return 900.0f;
+}
+
+
+

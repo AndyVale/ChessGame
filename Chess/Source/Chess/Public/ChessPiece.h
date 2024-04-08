@@ -11,18 +11,27 @@ UCLASS(Abstract)
 class CHESS_API AChessPiece : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AChessPiece();
 
 	ChessColor PieceColor;
 
+	FVector2D PiecePosition;
+
+	AChessboard* ReferredBoard;
+
 	void SetColorAndMaterial(ChessColor c);
 	//GetPieceMoves get all the possible moves of a piece, no regarding at check situations or similar
 
-	
 	virtual TArray<FVector2D>GetPieceMoves(FVector2D* xy, AChessboard* Board)  PURE_VIRTUAL(AChessPiece::GetPieceMoves, return TArray<FVector2D>(););
+
+	virtual float GetPieceValue() PURE_VIRTUAL(AChessPiece::GetPieceValue, return float(););//return piece value
+
+	virtual float GetCorrectedPieceValue();//return piece value corrected on piece position
+
+	virtual float GetPositionValue(FVector2D xy) PURE_VIRTUAL(AChessPiece::GetPositionValue, return float(););//return piece value on the specified xy position
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
 	USceneComponent* Scene;
@@ -40,7 +49,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	//Asuiliary methods for Queen, Rook and Bishop moves:

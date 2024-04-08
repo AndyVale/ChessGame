@@ -37,7 +37,10 @@ public:
 	// Sets default values for this actor's properties
 	AChessboard();
 
-	//TSharedPtr<Chess_Move> PopLastMove();
+	//float PositionValue;//sum of white material - black material; initialized at the spawn of the chesspiece and updated when a move is done
+	float WhiteMaterial;
+
+	float BlackMaterial;
 
 	TMap<AChessPiece*, FVector2D> GetPieces(ChessColor C);
 
@@ -73,7 +76,7 @@ public:
 	TSharedPtr<Chess_Move> PromoteLastMove(CP ChessPieceEnum);
 
 	bool CheckControl(ChessColor C);
-	
+
 	bool MateControl(ChessColor C);
 
 	bool StallControl(ChessColor C);
@@ -101,7 +104,6 @@ public:
 	FVector GetRelativeLocationByXYPosition(const int32 InX, const int32 InY) const;
 
 	FVector2D GetXYPositionByRelativeLocation(const FVector& Location) const;
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -123,6 +125,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TSubclassOf<AChessPiece> Rook;
 
+	UFUNCTION()
+	void ReplayMove(int32 moveNumber);
+
+	UFUNCTION()
+	void RemoveUndoneMoves(int32 moveNumber);
+protected:
+
 private:
 
 	TArray<TSharedPtr<Chess_Move>> StackMoves;
@@ -143,10 +152,7 @@ private:
 
 	AChessPiece* SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY);
 
-	//void RollbackMove(FVector2D, FVector2D, AChessPiece*);
-
 	void FilterMovesAvoidCheck(AChessPiece* p, TArray<FVector2D>& moves);
 
-	UFUNCTION()
 	void PushAndPopUntilMove(int32 moveNumber);
 };

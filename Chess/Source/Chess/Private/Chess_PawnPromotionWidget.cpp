@@ -7,8 +7,8 @@
 
 void UChess_PawnPromotionWidget::NativeConstruct()
 {
-	Super::NativeConstruct();
-    
+    Super::NativeConstruct();
+
     BishopButton->OnClicked.AddDynamic(this, &UChess_PawnPromotionWidget::clickOnBishop);
     RookButton->OnClicked.AddDynamic(this, &UChess_PawnPromotionWidget::clickOnRook);
     QueenButton->OnClicked.AddDynamic(this, &UChess_PawnPromotionWidget::clickOnQueen);

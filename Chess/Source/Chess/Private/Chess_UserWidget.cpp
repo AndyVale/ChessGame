@@ -23,6 +23,7 @@ void UChess_UserWidget::NativeConstruct()
             }
             GameMode->OnPlayerSwap.AddDynamic(this, &UChess_UserWidget::ShowPlayerHandler);
             GameMode->OnShowPromotionWidget.BindUObject(this, &UChess_UserWidget::SetPromotionWidgetVisible);
+            GameMode->OnTurnGoBack.AddUObject(this, &UChess_UserWidget::RemoveMovesUntil);
         }
     }
 
@@ -58,9 +59,27 @@ void UChess_UserWidget::ReplayMove(int32 moveNumber)
     }
 }
 
+void UChess_UserWidget::RemoveMovesUntil(int32 moveNumber)
+{
+    //moveNumber = number of moves to mantain
+    int32 numberOfEntriesToRemove = TurnsHistory.Num() - moveNumber / 2;
+    while (numberOfEntriesToRemove > 0)
+    {
+        RemoveLastMove();
+        numberOfEntriesToRemove--;
+    }
+    if (moveNumber % 2 != 0)
+    {
+        if (!TurnsHistory.IsEmpty())
+        {
+            TurnsHistory.Top()->SetBlackMoveText(FString("--"));
+        }
+    }
+}
+
 void UChess_UserWidget::SetPromotionWidgetVisible(ChessColor playerColor)
 {
-        
+
     FLinearColor color = playerColor == ChessColor::WHITE ? FLinearColor(999, 999, 999) : FLinearColor(FVector(0, 0, 0));
     if (PawnPromotionWidget) {
         PawnPromotionWidget->SetVisibility(ESlateVisibility::Visible);
@@ -96,7 +115,7 @@ void UChess_UserWidget::RematchOnClick()
 void UChess_UserWidget::ScoreUpdateHandler() {
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("ScoreUpdateHandler HUD"));
 
-    if(GameInstanceRef)
+    if (GameInstanceRef)
     {
         if (HumanScoreText)
         {
@@ -125,7 +144,7 @@ void UChess_UserWidget::MoveHandler(FString stringMove, int32 moveNumber)
     UChess_StoryBoardEntry* moveTurnEntry;
     if (TurnsHistory.Num() * 2 >= moveNumber)//2 moves in each turn
     {//no need to create new turn entry
-        moveTurnEntry = TurnsHistory[(moveNumber - 1)/ 2];
+        moveTurnEntry = TurnsHistory[(moveNumber - 1) / 2];
     }
     else
     {//create a new entry
@@ -151,9 +170,9 @@ void UChess_UserWidget::MoveHandler(FString stringMove, int32 moveNumber)
 
 void UChess_UserWidget::ShowPlayerHandler()
 {
-    if(CurrentPlayerText)
+    if (CurrentPlayerText)
     {
-        if(CurrentPlayerText->GetText().ToString().Compare("White turn") == 0)
+        if (CurrentPlayerText->GetText().ToString().Compare("White turn") == 0)
         {
             CurrentPlayerText->SetText(FText::FromString("Black turn"));
         }

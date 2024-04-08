@@ -6,7 +6,7 @@
 #include "Chess_UserWidget.h"
 #include "Blueprint/WidgetTree.h"
 
-void UChess_StoryBoardEntry:: NativeConstruct()
+void UChess_StoryBoardEntry::NativeConstruct()
 {
 	Super::NativeConstruct();
 }

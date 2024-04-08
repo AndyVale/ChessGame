@@ -43,6 +43,6 @@ protected:
 	bool bIsMyTurn = false;
 	ChessColor MyColor = WHITE;
 private:
-
-
+	UFUNCTION()
+	void ReplayHandler(int32 moveNumber);
 };

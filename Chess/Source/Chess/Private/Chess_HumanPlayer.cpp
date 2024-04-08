@@ -10,52 +10,62 @@
 // Sets default values
 AChess_HumanPlayer::AChess_HumanPlayer()
 {
-	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-	AutoPossessPlayer = EAutoReceiveInput::Player0;
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("DAJE"));
+    // Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+    PrimaryActorTick.bCanEverTick = true;
+    AutoPossessPlayer = EAutoReceiveInput::Player0;
+    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("DAJE"));
 
-	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-	SetRootComponent(Camera);
+    Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
+    SetRootComponent(Camera);
     GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-	Color = WHITE;
+    Color = WHITE;
 }
 
 // Called when the game starts or when spawned
 void AChess_HumanPlayer::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
+    if (AChess_GameMode* gm = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode()))
+    {
+        gm->OnReplayMove.AddDynamic(this, &AChess_HumanPlayer::ReplayHandler);
+    }
 }
+
+void AChess_HumanPlayer::ReplayHandler(int32 moveNumber) {
+    bIsMyTurn = MyColor == ChessColor::WHITE ? moveNumber % 2 == 0 : moveNumber % 2 == 1;
+    SelectedPiece = nullptr;
+}
+
 
 // Called every frame
 void AChess_HumanPlayer::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 }
 
 // Called to bind functionality to input
 void AChess_HumanPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 void AChess_HumanPlayer::OnTurn()
 {
-	bIsMyTurn = true;
-	//GameInstance->SetTurnMessage(TEXT("Human Turn"));
+    bIsMyTurn = true;
+    //GameInstance->SetTurnMessage(TEXT("Human Turn"));
 }
 
 void AChess_HumanPlayer::OnWin()
 {
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Win!"));
-	GameInstanceRef->SetTurnMessage(TEXT("Human Wins!"));
-	GameInstanceRef->IncrementScoreHumanPlayer();
+    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Win!"));
+    GameInstanceRef->SetTurnMessage(TEXT("Human Wins!"));
+    GameInstanceRef->IncrementScoreHumanPlayer();
 }
 
 void AChess_HumanPlayer::OnLose()
 {
-	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Lose!"));
-	GameInstanceRef->SetTurnMessage(TEXT("Human Loses!"));
+    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Lose!"));
+    GameInstanceRef->SetTurnMessage(TEXT("Human Loses!"));
 }
 
 void AChess_HumanPlayer::OnClick()
@@ -71,16 +81,16 @@ void AChess_HumanPlayer::OnClick()
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("GameMode is null in OnClick function"));
         return;
     }
-    
+
     AChessboard* Board = GameMode->Board;
     if (Board == nullptr) {
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Board is null in OnClick function"));
         return;
     }
 
-    if (Hit.bBlockingHit && !Board->IsOnReplay())//if I click on something and the board is not showing a replay TODO: trova un'altra soluzione
+    if (Hit.bBlockingHit)//if I click on something and the board is not showing a replay TODO: trova un'altra soluzione
     {
-        if(SelectedPiece == nullptr)//Piece is not selected yet
+        if (SelectedPiece == nullptr)//Piece is not selected yet
         {
             //Select piece
             if (AChessPiece* CurrPiece = Cast<AChessPiece>(Hit.GetActor()))
@@ -103,12 +113,20 @@ void AChess_HumanPlayer::OnClick()
             FVector2D oldLoc = Board->GetXYPositionByRelativeLocation(SelectedPiece->GetActorLocation());
             FVector2D newLoc = Board->GetXYPositionByRelativeLocation(CurrClicked->GetActorLocation());
             TSharedPtr<Chess_Move> move = MakeShareable(new Chess_Move(oldLoc, newLoc, Board));
+
+            if (GameMode->bIsOnReplay)
+            {
+                GameMode->GoBackToActualMove();//Remove history board after the performed move
+            }
+
             if (CurrClicked && Board->MakeASafeMove(move))
             {//if MakeASafeMove return the move is done, otherwise the piece is deselected
                 GameMode->UpdateLastMove(move);
                 bIsMyTurn = false;
             }
-            Board->CancelFeasibleSquares();
+
+            GameMode->Board->CancelFeasibleSquares();
+
             SelectedPiece = nullptr;
             if (!bIsMyTurn)
             {

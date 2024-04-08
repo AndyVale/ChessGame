@@ -14,5 +14,35 @@ class CHESS_API ACP_Queen : public AChessPiece
 {
 	GENERATED_BODY()
 public:
+    static inline const TArray<TArray<float>> WhiteEvalMatrix =
+    {
+    { -20.0, -10.0, -10.0, -5.0, -5.0, -10.0, -10.0, -20.0 },
+    { -10.0,  -10.0,   -10.0,   -10.0,  -10.0, -10.0, -10.0,  -10.0 },
+    { -10.0,  0.0,   0.0,   0.0,  0.0,   0.0,   0.0,  -10.0 },
+    {  -5.0,   0.0,   0.0,   0.0,  0.0,  0.0,   0.0,  0.0},
+    { -5.0,   0.0,   0.0,   0.0,  0.0,   0.0,   0.0,  -5.0 },
+    { -10.0,  0.0,   0.0,   0.0,  0.0,   0.0,   0.0,  -10.0 },
+    { -10.0,  0.0,   0.0,   0.0,  0.0,   0.0,   0.0,  -10.0 },
+    { -20.0, -10.0, -10.0, -5.0, -5.0, -10.0, -10.0, -20.0 }
+    };
+
+
+    // Matrice di valutazione per la regina nera
+    static inline const TArray<TArray<float>> BlackEvalMatrix =
+    {
+    { -20.0, -10.0, -10.0, -5.0, -5.0, -10.0, -10.0, -20.0 },
+    { -10.0,  0.0,   0.0,   0.0,  0.0,   0.0,   0.0,  -10.0 },
+    { -10.0,  0.0,   0.0,   0.0,  0.0,   0.0,   0.0,  -10.0 },
+    { -5.0,   0.0,   0.0,   0.0,  0.0,   0.0,   0.0,  -5.0 },
+    {  0.0,   0.0,   0.0,   0.0,  0.0,  0.0,   0.0,  -5.0 },
+    { -10.0,  0.0,   0.0,   0.0,  0.0,   0.0,   0.0,  -10.0 },
+    { -10.0,  -10.0,   -10.0,   -10.0,  -10.0, -10.0, -10.0,  -10.0 },
+    { -20.0, -10.0, -10.0, -5.0, -5.0, -10.0, -10.0, -20.0 }
+    };
+
 	TArray<FVector2D>GetPieceMoves(FVector2D*, AChessboard* Board) override;
+	float GetPieceValue() override;
+    float GetPositionValue(FVector2D xy) override {
+        return PieceColor == ChessColor::WHITE ? WhiteEvalMatrix[xy.Y][xy.X] : BlackEvalMatrix[xy.Y][xy.X];
+	}
 };

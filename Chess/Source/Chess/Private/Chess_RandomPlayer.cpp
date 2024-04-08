@@ -8,11 +8,11 @@
 // Sets default values
 AChess_RandomPlayer::AChess_RandomPlayer()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	RandomPColor = BLACK;
 	GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-}	
+}
 
 // Called when the game starts or when spawned
 void AChess_RandomPlayer::BeginPlay()
@@ -39,7 +39,7 @@ void AChess_RandomPlayer::OnTurn()
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI (Random) Turn"));
 	FTimerHandle TimerHandle;
 	bMyTurn = true;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&] {AChess_RandomPlayer::MakeRandomMove();}, 1, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&] {AChess_RandomPlayer::MakeRandomMove(); }, 1, false);
 }
 void AChess_RandomPlayer::MakeRandomMove() {
 	AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode());
@@ -66,7 +66,7 @@ void AChess_RandomPlayer::MakeRandomMove() {
 			possibleMoves = Board->GetFeasibleSquares(actualPiece[randomPieceIndx], false);
 			numSize = possibleMoves.Num();
 			actualIsVisited[randomPieceIndx] = true;
- 		}
+		}
 	} while (numSize == 0 && actualIsVisited.Find(false) != INDEX_NONE);//get a piece that can be moved
 	TSharedPtr<Chess_Move> randomMove = nullptr;
 	if (bMyTurn) {
