@@ -28,6 +28,7 @@ void AChess_GameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	bIsGameOver = false;
+	int32 difficulty_level = -1;
 	AChess_HumanPlayer* HumanPlayer = Cast<AChess_HumanPlayer>(*TActorIterator<AChess_HumanPlayer>(GetWorld()));
 
 	if (BoardClass != nullptr)
@@ -46,16 +47,38 @@ void AChess_GameMode::BeginPlay()
 	ActorRotation.Pitch -= 90;//ruoto verso il basso
 	ActorRotation.Yaw -= 90;//in senso orario
 	HumanPlayer->SetActorRotation(ActorRotation);
+	
 
 	CurrentPlayer = 0;
 
 	Players.Add(HumanPlayer);
 
-	//AChess_RandomPlayer* RandomPlayer = GetWorld()->SpawnActor<AChess_RandomPlayer>(FVector(), FRotator());
-	//Players.Add(RandomPlayer);
+	if (UChess_GameInstance* GI = Cast<UChess_GameInstance>(GetGameInstance()))
+	{
+		difficulty_level = GI->GameDifficulty;
+	}
 
-	AChess_MinimaxPlayer* MinimaxPlayer = GetWorld()->SpawnActor<AChess_MinimaxPlayer>(FVector(), FRotator());
-	Players.Add(MinimaxPlayer);
+	switch (difficulty_level)
+	{
+	case 0:
+	{
+		AChess_RandomPlayer* RandomPlayer = GetWorld()->SpawnActor<AChess_RandomPlayer>(FVector(), FRotator());
+		Players.Add(RandomPlayer);
+		break;
+	}
+	case 1:
+	{
+		AChess_MinimaxPlayer* MinimaxPlayer = GetWorld()->SpawnActor<AChess_MinimaxPlayer>(FVector(), FRotator());
+		Players.Add(MinimaxPlayer);
+		break;
+	}
+	default://By default start with random player
+		AChess_RandomPlayer* RandomPlayer = GetWorld()->SpawnActor<AChess_RandomPlayer>(FVector(), FRotator());
+		Players.Add(RandomPlayer);
+		UE_LOG(LogTemp, Error, TEXT("No Game difficulty found, base difficulty selected (random player)"));
+
+		break;
+	}
 
 	if (UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))) {
 		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_GameMode::ResetHandler);

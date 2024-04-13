@@ -42,6 +42,8 @@ public:
 
 	void PromotePawn(bool simulate, TSubclassOf<AChessPiece> selectedPiece);//promote the pawn, if selectedPiece is null the method uses PawnPromotionAusRef as input
 
+	bool IsLegal();
+
 	FString ToString() const;
 	ChessColor GetMoveColor() const;
 	~Chess_Move();

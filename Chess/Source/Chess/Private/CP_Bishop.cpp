@@ -3,10 +3,10 @@
 
 #include "CP_Bishop.h"
 
-TArray<FVector2D> ACP_Bishop::GetPieceMoves(FVector2D* xy, AChessboard* Board)
+TArray<Chess_Move> ACP_Bishop::GetPieceMoves()
 {
-    TArray<FVector2D> moves = TArray<FVector2D>();
-    GetFeasibleDiagonals(xy, Board, moves);
+    TArray<Chess_Move> moves = TArray<Chess_Move>();
+    GetFeasibleDiagonals(this, moves);
     return moves;
 }
 

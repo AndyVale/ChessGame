@@ -5,24 +5,30 @@
 #include "Chessboard.h"
 
 
-TArray<FVector2D> ACP_Pawn::GetPieceMoves(FVector2D* xy, AChessboard* Board)
+TArray<Chess_Move> ACP_Pawn::GetPieceMoves()
 {
-	TArray<FVector2D> moves = TArray<FVector2D>();
-	int max = Board->BoardSize;
-	int x = (*xy)[0], y = (*xy)[1];
+	TArray<Chess_Move> moves = TArray<Chess_Move>();
+	
+	int max = ReferredBoard->BoardSize;
+	int x = PiecePosition[0], y = PiecePosition[1];
 	if (this->PieceColor == BLACK)//go from 0 to max
 	{
 		if (y + 1 < max) {//move forwards
-			if (!Board->GetPieceFromXY(FVector2D(x, y + 1))) {
-				moves.Add(FVector2D(x, y + 1));
-				if (y == 1 && !Board->GetPieceFromXY(FVector2D(x, y + 2)))
-					moves.Add(FVector2D(x, y + 2));
+			if (!ReferredBoard->GetPieceFromXY(FVector2D(x, y + 1)))
+			{
+				moves.Add(Chess_Move(PiecePosition, FVector2D(x, y + 1), ReferredBoard));
+				if (y == 1 && !ReferredBoard->GetPieceFromXY(FVector2D(x, y + 2)))
+				{
+					moves.Add(Chess_Move(PiecePosition, FVector2D(x, y + 2), ReferredBoard));
+				}
 			}
-			if (x + 1 < max && Board->GetPieceColorFromXY(FVector2D(x + 1, y + 1)) == WHITE) {//eat
-				moves.Add(FVector2D(x + 1, y + 1));
+			if (x + 1 < max && ReferredBoard->GetPieceColorFromXY(FVector2D(x + 1, y + 1)) == WHITE) 
+			{//eat
+				moves.Add(Chess_Move(PiecePosition, FVector2D(x + 1, y + 1), ReferredBoard));
 			}
-			if (x - 1 >= 0 && Board->GetPieceColorFromXY(FVector2D(x - 1, y + 1)) == WHITE) {//eat
-				moves.Add(FVector2D(x - 1, y + 1));
+			if (x - 1 >= 0 && ReferredBoard->GetPieceColorFromXY(FVector2D(x - 1, y + 1)) == WHITE) 
+			{//eat
+				moves.Add(Chess_Move(PiecePosition, FVector2D(x - 1, y + 1), ReferredBoard));
 			}
 		}
 
@@ -30,20 +36,24 @@ TArray<FVector2D> ACP_Pawn::GetPieceMoves(FVector2D* xy, AChessboard* Board)
 	else//go from max downto 0
 	{
 		if (y - 1 >= 0) {//move backwards
-			if (!Board->GetPieceFromXY(FVector2D(x, y - 1)))
+			if (!ReferredBoard->GetPieceFromXY(FVector2D(x, y - 1)))
 			{
-				moves.Add(FVector2D(x, y - 1));
-				if (y == 6 && !Board->GetPieceFromXY(FVector2D(x, y - 2)))
-					moves.Add(FVector2D(x, y - 2));
+				moves.Add(Chess_Move(PiecePosition, FVector2D(x, y - 1), ReferredBoard));
+				if (y == 6 && !ReferredBoard->GetPieceFromXY(FVector2D(x, y - 2)))
+				{
+					moves.Add(Chess_Move(PiecePosition, FVector2D(x, y - 2), ReferredBoard));
+				}
 			}
-			if (x + 1 < max && Board->GetPieceColorFromXY(FVector2D(x + 1, y - 1)) == BLACK) {//eat
-				moves.Add(FVector2D(x + 1, y - 1));
+			if (x + 1 < max && ReferredBoard->GetPieceColorFromXY(FVector2D(x + 1, y - 1)) == BLACK)
+			{//eat
+				moves.Add(Chess_Move(PiecePosition, FVector2D(x + 1, y - 1), ReferredBoard));
 			}
-			if (x - 1 >= 0 && Board->GetPieceColorFromXY(FVector2D(x - 1, y - 1)) == BLACK) {//eat
-				moves.Add(FVector2D(x - 1, y - 1));
+			if (x - 1 >= 0 && ReferredBoard->GetPieceColorFromXY(FVector2D(x - 1, y - 1)) == BLACK) {//eat
+				moves.Add(Chess_Move(PiecePosition, FVector2D(x - 1, y - 1), ReferredBoard));
 			}
 		}
 	}
+
 	return moves;
 }
 

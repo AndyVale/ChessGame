@@ -2,6 +2,7 @@
 
 
 #include "Chess_MinimaxPlayer.h"
+#include "chrono"
 int32 nodeVisited = 0;
 
 // Sets default values
@@ -36,7 +37,7 @@ void AChess_MinimaxPlayer::OnTurn()
 {
 	FTimerHandle TimerHandle;
 	//bMyTurn = true;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&] { AChess_MinimaxPlayer::MakeMinimaxMove(); }, 0.001, false);
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&] { AChess_MinimaxPlayer::MakeMinimaxMove(); }, 1, false);
 }
 
 void AChess_MinimaxPlayer::OnWin()
@@ -48,13 +49,20 @@ void AChess_MinimaxPlayer::OnWin()
 void AChess_MinimaxPlayer::OnLose()
 {
 }
+int32 visitedNode;
 
 void AChess_MinimaxPlayer::MakeMinimaxMove()
 {
 	AChess_GameMode* GM = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode());
 
+	auto start = std::chrono::high_resolution_clock::now();
 	TSharedPtr<Chess_Move> miniMaxMove = FindBestMove(GM->Board);
-	int32 a = nodeVisited;
+	auto end = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+	int32 a = visitedNode;
+	double m = (a*1.0) / duration;
+	UE_LOG(LogTemp, Error, TEXT("%d,       %lld,"), a, duration, m);
+
 	if (miniMaxMove)
 	{
 		GM->Board->MakeAMove(miniMaxMove, false);
@@ -75,26 +83,22 @@ void AChess_MinimaxPlayer::MakeMinimaxMove()
 	}
 	GM->TurnNextPlayer();
 }
-
 TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 {
 	float bestScore;
 	float actualScore;
 	TArray< TSharedPtr<Chess_Move>> bestMoves = TArray< TSharedPtr<Chess_Move>>();
-	TSharedPtr<Chess_Move> bestMove = nullptr;
-	TMap<AChessPiece*, FVector2D> piecesMap;
+	TSharedPtr<Chess_Move> lastBestMove = nullptr;
+	TArray<AChessPiece*>  piecesMap;
 	TArray<Chess_Move> moves = TArray<Chess_Move>();
-
+	visitedNode = 0;
 	if (Color == ChessColor::BLACK)//play as Minimizer
 	{
 		bestScore = +20000.0f;
 		piecesMap = board->GetPieces(BLACK);
-		for (auto& piece_xy : piecesMap)
+		for (auto& piece : piecesMap)
 		{
-			for (FVector2D& xy : board->GetFeasibleSquares(piece_xy.Key, false))
-			{
-				moves.Add(Chess_Move(piece_xy.Key->PiecePosition, xy, board));
-			}
+			moves.Append(piece->GetPieceLegalMoves());
 		}
 
 		moves.Sort([](const Chess_Move& a, const  Chess_Move& b) {//order in descending order -> best move for black first
@@ -103,6 +107,7 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 
 		for (Chess_Move& move : moves)
 		{
+			visitedNode++;
 			move.MakeMove(true);
 			if (move.bPromotionAfterMove)
 			{
@@ -113,12 +118,13 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 			if (actualScore < bestScore)
 			{
 				bestMoves.Empty();
-				bestMove = MakeShareable<Chess_Move>(new Chess_Move(move));//new Chess_Move(move);
+				//bestMove = MakeShareable<Chess_Move>(new Chess_Move(move));//new Chess_Move(move);
 				bestScore = actualScore;
 			}
 			if (actualScore == bestScore)
 			{
-				bestMoves.Add(bestMove);
+				lastBestMove = MakeShareable<Chess_Move>(new Chess_Move(move));
+				bestMoves.Add(lastBestMove);
 			}
 		}
 		/*if (bestMoves.Num() > 0)
@@ -127,17 +133,16 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 			return bestMoves[indx];
 		}*/
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%f"), bestScore));
-		return bestMove;//nullptr;//
+		return lastBestMove;//nullptr;//
 	}
 	else//play as Maximizer
 	{
 		bestScore = -20000.0f;
 		piecesMap = board->GetPieces(WHITE);
-		for (auto& piece_xy : piecesMap)
+		for (auto& piece : piecesMap)
 		{
-			for (FVector2D& xy : board->GetFeasibleSquares(piece_xy.Key, false))
+			for (Chess_Move& move : piece->GetPieceMoves())
 			{
-				Chess_Move move = Chess_Move(piece_xy.Key->PiecePosition, xy, board);
 				move.MakeMove(true);
 				if (move.bPromotionAfterMove)
 				{
@@ -147,13 +152,13 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 				move.RollbackMove(true);
 				if (actualScore >= bestScore)
 				{
-					bestMove = MakeShareable<Chess_Move>(new Chess_Move(move));//new Chess_Move(move);
+					lastBestMove = MakeShareable<Chess_Move>(new Chess_Move(move));//new Chess_Move(move);
 					bestScore = actualScore;
 				}
 			}
 		}
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%f"), bestScore));
-		return bestMove;
+		return lastBestMove;
 	}
 }
 
@@ -162,7 +167,7 @@ float AChess_MinimaxPlayer::EvaluatePieces(AChessboard* board)
 	if (Color == ChessColor::NAC) {
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("EvaluatePieces::Color is not a color"));
 	}
-
+	
 	if (board->CheckControl(ChessColor::BLACK))//Maximizer Wins
 	{
 		if (board->MateControl(ChessColor::BLACK))
@@ -173,7 +178,7 @@ float AChess_MinimaxPlayer::EvaluatePieces(AChessboard* board)
 
 	if (board->CheckControl(ChessColor::WHITE))//Minimizer Wins
 	{
-		if (board->MateControl(ChessColor::WHITE))
+		if(board->MateControl(ChessColor::WHITE))
 		{
 			return -10000.0f;
 		}
@@ -194,11 +199,10 @@ float AChess_MinimaxPlayer::EvaluatePieces(AChessboard* board)
 //first call with alfa = -MAX_flt, beta = MAX_flt; WHITE is always Maximizer, BLACK is always Minimizer
 float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard* board, int32 depth, bool isMax)
 {
-	
 	float value = EvaluatePieces(board);
-	TMap<AChessPiece*, FVector2D> piecesMap;
+	TArray<AChessPiece*> pieces;
 	TArray<Chess_Move> moves = TArray<Chess_Move>();
-
+	bool stall = true;//no legal moves -> stall
 	//is terminal:
 	if (value == -10000.0f)//MAX under checkmate
 	{
@@ -218,14 +222,15 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 
 	if (isMax)//Maximizer - White
 	{
+		//if (value >= beta)//Minimizer wont select this path, so prune
+		//{
+		//	return value;
+		//}
 		value = -20000.0f;//v <- -inf
-		piecesMap = board->GetPieces(WHITE);
-		for (auto& piece_xy : piecesMap)
+		pieces = board->GetPieces(WHITE);
+		for (auto& piece : pieces)
 		{
-			for (FVector2D& xy : board->GetFeasibleSquares(piece_xy.Key, false))
-			{
-				moves.Add(Chess_Move(piece_xy.Key->PiecePosition, xy, board));
-			}
+			moves.Append(piece->GetPieceMoves());
 		}
 
 		if (moves.IsEmpty())//stall
@@ -236,61 +241,86 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 		moves.Sort([](const Chess_Move& a, const  Chess_Move& b) {//order in descending order -> best move for white first
 			return a.MoveValue > b.MoveValue;
 			});
-
 		for (Chess_Move& move : moves)
 		{
-			move.MakeMove(true);
-			if (move.bPromotionAfterMove)
+			visitedNode++;
+			if (move.IsLegal())
 			{
-				move.PromotePawn(true, board->Queen);
+				stall = false;
+				move.MakeMove(true);
+				if (move.bPromotionAfterMove)
+				{
+					move.PromotePawn(true, board->Queen);
+				}
+				value = FMath::Max(value, AlfaBetaMinimax(alfa, beta, board, depth - 1, false));
+				move.RollbackMove(true);
+				if (value >= beta)//Minimizer wont select this path, so prune
+				{
+					return value;
+				}
+				alfa = FMath::Max(alfa, value);//Update upperbound
 			}
-			value = FMath::Max(value, AlfaBetaMinimax(alfa, beta, board, depth - 1, false));
-			move.RollbackMove(true);
-			if (value >= beta)//Minimizer wont select this path, so prune
-			{
-				return value;
-			}
-			alfa = FMath::Max(alfa, value);//Update upperbound
-		}
-		return value;
-	}
-	else //Minimizer - Black
-	{
-		value = 20000.0f;//v <- +inf
-		piecesMap = board->GetPieces(BLACK);
-
-		for (auto& piece_xy : piecesMap)
-		{
-			for (FVector2D& xy : board->GetFeasibleSquares(piece_xy.Key, false))
-			{
-				moves.Add(Chess_Move(piece_xy.Key->PiecePosition, xy, board));
+			else {
+				//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Non legal"));
 			}
 		}
 
-		if (moves.IsEmpty())//stall
+		if (stall)
 		{
 			return 0;
 		}
 
+		return value;
+	}
+	else //Minimizer - Black
+	{
+		//if (value <= alfa)//Minimizer wont select this path, so prune
+		//{
+		//	return value;
+		//}
+		value = 20000.0f;//v <- +inf
+		pieces = board->GetPieces(BLACK);
+
+		for (auto& piece : pieces)
+		{
+			moves.Append(piece->GetPieceMoves());
+		}
+		
+
 		moves.Sort([](const Chess_Move& a, const  Chess_Move& b) {//order in ascending order -> best move for black first
 			return a.MoveValue < b.MoveValue;
 			});
-
 		for (Chess_Move& move : moves)
 		{
-			move.MakeMove(true);
-			if (move.bPromotionAfterMove)
+			visitedNode++;
+			if (move.IsLegal())
 			{
-				move.PromotePawn(true, board->Queen);
+				stall = false;
+				move.MakeMove(true);
+				if (move.bPromotionAfterMove)
+				{
+					move.PromotePawn(true, board->Queen);
+				}
+				value = FMath::Min(value, AlfaBetaMinimax(alfa, beta, board, depth - 1, true));
+				move.RollbackMove(true);
+				if (value <= alfa)//Maximizer wont select this path, so prune
+				{
+					return value;
+				}
+				beta = FMath::Min(beta, value);//Update lowerbound
 			}
-			value = FMath::Min(value, AlfaBetaMinimax(alfa, beta, board, depth - 1, true));
-			move.RollbackMove(true);
-			if (value <= alfa)//Maximizer wont select this path, so prune
-			{
-				return value;
+			else {
+				//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Non legal"));
 			}
-			beta = FMath::Min(beta, value);//Update lowerbound
 		}
+
+		if (stall)
+		{
+			return 0;
+		}
+
 		return value;
 	}
 }
+
+

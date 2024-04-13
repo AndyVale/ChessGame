@@ -23,6 +23,9 @@ class CHESS_API UChess_GameInstance : public UGameInstance
 
 public:
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 GameDifficulty = -1;
+	
 	UPROPERTY(BlueprintAssignable)
 	FOnReset OnResetEvent;
 

@@ -97,7 +97,7 @@ void AChess_HumanPlayer::OnClick()
             {
                 if (CurrPiece->PieceColor == MyColor) {
                     SelectedPiece = CurrPiece;
-                    Board->GetFeasibleSquares(SelectedPiece, true);
+                    Board->GetLegalSquares(SelectedPiece, true);
                 }
                 else {
                     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("You have to select a piece of your color!"));

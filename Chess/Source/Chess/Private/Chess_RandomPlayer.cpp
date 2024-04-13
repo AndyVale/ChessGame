@@ -44,52 +44,50 @@ void AChess_RandomPlayer::OnTurn()
 void AChess_RandomPlayer::MakeRandomMove() {
 	AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode());
 	AChessboard* Board = GameMode->Board;
-	TMap<AChessPiece*, FVector2D> ActualPieces = Board->GetPieces(RandomPColor);
+	TArray<AChessPiece*> ActualPieces = Board->GetPieces(RandomPColor);
 	TArray<bool> actualIsVisited;
 	TArray<AChessPiece*> actualPiece;
 	TArray<FVector2D> actualXY;
 
 	for (auto& p : ActualPieces) {
 		actualIsVisited.Add(false);
-		actualPiece.Add(p.Key);
-		actualXY.Add(p.Value);
+		actualPiece.Add(p);
+		actualXY.Add(p->PiecePosition);
 	}
 
 	int32 piecesNumber = actualIsVisited.Num();
-	TArray<FVector2D> possibleMoves;
+	TArray<Chess_Move> possibleMoves;
 	int numSize = 0;
 	int32 randomPieceIndx = 0;
 
 	do {
 		randomPieceIndx = FMath::Rand() % piecesNumber;
 		if (!actualIsVisited[randomPieceIndx]) {
-			possibleMoves = Board->GetFeasibleSquares(actualPiece[randomPieceIndx], false);
+			possibleMoves = actualPiece[randomPieceIndx]->GetPieceLegalMoves();
 			numSize = possibleMoves.Num();
 			actualIsVisited[randomPieceIndx] = true;
 		}
 	} while (numSize == 0 && actualIsVisited.Find(false) != INDEX_NONE);//get a piece that can be moved
-	TSharedPtr<Chess_Move> randomMove = nullptr;
+	TSharedPtr<Chess_Move> randomMovePtr = nullptr;
 	if (bMyTurn) {
 		if (numSize != 0)
 		{
 			int32 randomMoveIndx = FMath::Rand() % numSize;
-			FVector2D newLoc = possibleMoves[randomMoveIndx];
-			FVector2D oldLoc = *Board->GetXYFromPiece(actualPiece[randomPieceIndx]);
-			randomMove = MakeShareable(new Chess_Move(oldLoc, newLoc, Board));
-			Board->MakeAMove(randomMove, false);
+			randomMovePtr = MakeShareable(new Chess_Move(possibleMoves[randomMoveIndx]));
+			Board->MakeAMove(randomMovePtr, false);
 			//Chess_Move succMove = Chess_Move(oldLoc, newLoc);
 		}
 		else
 		{
 			//STALLO
 		}
-		if (randomMove && randomMove->bPromotionAfterMove) {
+		if (randomMovePtr && randomMovePtr->bPromotionAfterMove) {
 			TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
 			int32 randomPromotionIndx = FMath::Rand() % randomPromotedPiece.Num();
 			Board->PromoteLastMove(randomPromotedPiece[randomPromotionIndx]);
 		}
-		if (randomMove) {
-			GameMode->UpdateLastMove(randomMove);//notify the HUD of the move
+		if (randomMovePtr) {
+			GameMode->UpdateLastMove(randomMovePtr);//notify the HUD of the move
 		}
 	}
 

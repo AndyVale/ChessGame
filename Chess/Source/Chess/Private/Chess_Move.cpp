@@ -154,6 +154,14 @@ void Chess_Move::PromotePawn(bool simulate, TSubclassOf<AChessPiece> selectedPie
     CalculateResult();//update attributes for "toString" method
 }
 
+bool Chess_Move::IsLegal()
+{
+    MakeMove(true);
+    bool isLegal = !ReferredBoard->CheckControl(GetMoveColor());
+    RollbackMove(true);
+    return isLegal;
+}
+
 void Chess_Move::PromoteRollbackPawn(bool simulate)
 {
     //if (simulate) return;
@@ -192,20 +200,20 @@ float Chess_Move::MoveValueCalculation()
     {
         if (GetMoveColor() == ChessColor::WHITE)
         {//positive counting for white
-            value -= PieceFrom->GetPositionValue(From);//move value = newPiecePositionValue - oldPiecePositionValue
-            value += PieceFrom->GetPositionValue(To);
+            //value -= PieceFrom->GetPositionValue(From);//move value = newPiecePositionValue - oldPiecePositionValue
+            //value += PieceFrom->GetPositionValue(To);
             if (PieceTo)
             {
-                value += PieceTo->GetCorrectedPieceValue();
+                value += PieceTo->GetPieceValue();
             }
         }
         else
         {//negative counting for black
-            value += PieceFrom->GetPositionValue(From);//move value = newPiecePositionValue - oldPiecePositionValue
-            value -= PieceFrom->GetPositionValue(To);
+            //value += PieceFrom->GetPositionValue(From);//move value = newPiecePositionValue - oldPiecePositionValue
+            //value -= PieceFrom->GetPositionValue(To);
             if (PieceTo)
             {
-                value -= PieceTo->GetCorrectedPieceValue();
+                value -= PieceTo->GetPieceValue();
             }
         }
     }

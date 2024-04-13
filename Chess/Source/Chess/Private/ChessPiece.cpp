@@ -11,6 +11,7 @@ AChessPiece::AChessPiece()
     Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
     ChessPieceMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
     ChessPieceMesh->SetWorldScale3D(FVector(0.60, 0.60, 0.001));
+    PiecePosition = FVector2D(-1, -1);//initializing pieceposition to a non valid xy
     //ChessPieceMesh->SetRelativeLocation(FVector(-10, -20, 0));
     SetRootComponent(Scene);
     ChessPieceMesh->SetupAttachment(Scene);
@@ -33,18 +34,6 @@ void AChessPiece::SetColorAndMaterial(ChessColor c)
     }
 }
 
-/*
-TArray<FVector2D> AChessPiece::GetPieceMoves(FVector2D* xy, AChessboard* Board)//TODO:Levare come mossa feasible il mangiare il RE
-{
-    TArray<FVector2D> moves;
-    //if (xy)
-   // {
-   //     moves.Add(*xy);//you can always click on the selected piece to undo the move
-   // }
-return moves;
-}
-*/
-
 // Called when the game starts or when spawned
 void AChessPiece::BeginPlay()
 {
@@ -57,10 +46,11 @@ void AChessPiece::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
-void AChessPiece::GetFeasibleDiagonals(FVector2D* xy, AChessboard* Board, TArray<FVector2D>& moves)
+void AChessPiece::GetFeasibleDiagonals(AChessPiece* piece, TArray<Chess_Move>& moves)
 {
+    AChessboard* Board = piece->ReferredBoard;
     int max = Board->BoardSize;
-    int x = (*xy)[0], y = (*xy)[1];
+    int x = piece->PiecePosition[0], y = piece->PiecePosition[1];
 
     FVector2D bishopDirections[4] =
     {
@@ -80,22 +70,23 @@ void AChessPiece::GetFeasibleDiagonals(FVector2D* xy, AChessboard* Board, TArray
             if (Board->GetPieceFromXY(FVector2D(i, j)))
             {
                 foundPiece = true;
-                if (Board->GetPieceColorFromXY(FVector2D(i, j)) == PieceColor)
+                if (Board->GetPieceColorFromXY(FVector2D(i, j)) == piece->PieceColor)
                 {
                     break;
                 }
             }
-            moves.Add(FVector2D(i, j));
+            moves.Add(Chess_Move(piece->PiecePosition, FVector2D(i, j), piece->ReferredBoard));
             i += move.X;
             j += move.Y;
         }
     }
 }
 
-void AChessPiece::GetFeasibleCross(FVector2D* xy, AChessboard* Board, TArray<FVector2D>& moves)
+void AChessPiece::GetFeasibleCross(AChessPiece* piece, TArray <Chess_Move> & moves)
 {
+    AChessboard* Board = piece->ReferredBoard;
     int max = Board->BoardSize;
-    int x = (*xy)[0], y = (*xy)[1];
+    int x = piece->PiecePosition[0], y = piece->PiecePosition[1];
 
     FVector2D rookDirections[4] =
     {
@@ -116,12 +107,12 @@ void AChessPiece::GetFeasibleCross(FVector2D* xy, AChessboard* Board, TArray<FVe
             if (Board->GetPieceFromXY(FVector2D(i, j)))
             {
                 foundPiece = true;
-                if (Board->GetPieceColorFromXY(FVector2D(i, j)) == PieceColor)
+                if (Board->GetPieceColorFromXY(FVector2D(i, j)) == piece->PieceColor)
                 {
                     break;
                 }
             }
-            moves.Add(FVector2D(i, j));
+            moves.Add(Chess_Move(piece->PiecePosition, FVector2D(i, j), piece->ReferredBoard));
             i += move.X;
             j += move.Y;
         }
@@ -134,4 +125,20 @@ float AChessPiece::GetCorrectedPieceValue()
     float pv = GetPieceValue();
     float pov = GetPositionValue(PiecePosition);
     return pv + pov;
+}
+
+TArray<Chess_Move> AChessPiece::GetPieceLegalMoves()
+{
+    TArray<Chess_Move> feasibleMoves = this->GetPieceMoves();
+    TArray<Chess_Move> legalMoves = TArray<Chess_Move>();
+
+    for (Chess_Move& move : feasibleMoves)
+    {
+        if (move.IsLegal())
+        {
+            legalMoves.Add(move);
+        }
+    }
+
+    return legalMoves;
 }

@@ -40,7 +40,7 @@ public:
     { -20.0, -10.0, -10.0, -5.0, -5.0, -10.0, -10.0, -20.0 }
     };
 
-	TArray<FVector2D>GetPieceMoves(FVector2D*, AChessboard* Board) override;
+	TArray<Chess_Move>GetPieceMoves() override;
 	float GetPieceValue() override;
     float GetPositionValue(FVector2D xy) override {
         return PieceColor == ChessColor::WHITE ? WhiteEvalMatrix[xy.Y][xy.X] : BlackEvalMatrix[xy.Y][xy.X];

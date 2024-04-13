@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Chessboard.h"
+#include "Chess_Move.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ChessPiece.generated.h"
@@ -25,7 +26,9 @@ public:
 	void SetColorAndMaterial(ChessColor c);
 	//GetPieceMoves get all the possible moves of a piece, no regarding at check situations or similar
 
-	virtual TArray<FVector2D>GetPieceMoves(FVector2D* xy, AChessboard* Board)  PURE_VIRTUAL(AChessPiece::GetPieceMoves, return TArray<FVector2D>(););
+	virtual TArray<Chess_Move>GetPieceMoves() PURE_VIRTUAL(AChessPiece::GetPieceMoves, return TArray<Chess_Move>(););
+
+	TArray<Chess_Move> GetPieceLegalMoves();
 
 	virtual float GetPieceValue() PURE_VIRTUAL(AChessPiece::GetPieceValue, return float(););//return piece value
 
@@ -52,9 +55,8 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	//Asuiliary methods for Queen, Rook and Bishop moves:
-	void GetFeasibleDiagonals(FVector2D* xy, AChessboard* Board, TArray<FVector2D>& moves);
-	void GetFeasibleCross(FVector2D* xy, AChessboard* Board, TArray<FVector2D>& moves);
-	//9284128: aggiunge solo se non va sotto scacco (DA USARE IL METODO PER ESEGUIRE LE MOSSE PER EVITARE CODICE BRUTTO)
-	//void addFeasibleMove(TArray<FVector2D>& moves); 
+	//Asuiliary methods for Queen and Rook:
+	static void GetFeasibleDiagonals(AChessPiece* piece, TArray<Chess_Move>& moves);
+	//Asuiliary methods for Queen and Bishop moves:
+	static void GetFeasibleCross(AChessPiece* piece, TArray<Chess_Move>& moves);
 };

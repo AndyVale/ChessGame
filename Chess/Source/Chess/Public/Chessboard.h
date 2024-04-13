@@ -42,7 +42,7 @@ public:
 
 	float BlackMaterial;
 
-	TMap<AChessPiece*, FVector2D> GetPieces(ChessColor C);
+	TArray<AChessPiece*> GetPieces(ChessColor C);
 
 	UFUNCTION()
 	void ResetBoard();
@@ -89,7 +89,7 @@ public:
 
 	void RollbackMove(TSharedPtr<Chess_Move> move, bool simulate);
 
-	TArray<FVector2D> GetFeasibleSquares(AChessPiece* Piece, bool Show);
+	TArray<FVector2D> GetLegalSquares(AChessPiece* Piece, bool Show);
 
 	void CancelFeasibleSquares();
 
@@ -145,14 +145,14 @@ private:
 	AChessPiece* BlackKing;
 
 	//UPROPERTY(VisibleAnywhere)
-	TMap<AChessPiece*, FVector2D> WhitePieces;
+	TArray<AChessPiece*> WhitePieces;
 
 	//UPROPERTY(VisibleAnywhere)
-	TMap<AChessPiece*, FVector2D> BlackPieces;
+	TArray<AChessPiece*> BlackPieces;
 
 	AChessPiece* SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY);
 
-	void FilterMovesAvoidCheck(AChessPiece* p, TArray<FVector2D>& moves);
+	//void FilterMovesAvoidCheck(AChessPiece* p, TArray<FVector2D>& moves);
 
 	void PushAndPopUntilMove(int32 moveNumber);
 };

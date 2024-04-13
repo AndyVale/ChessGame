@@ -32,6 +32,7 @@ class CHESS_API AChess_GameMode : public AGameModeBase
 	void ChoosePlayerAndStartGame();
 
 public:
+
 	UPROPERTY(BlueprintAssignable)
 	FOnPlayerSwap OnPlayerSwap;
 
@@ -58,6 +59,8 @@ public:
 	bool bIsOnReplay = false;
 	bool bIsGameOver = false;
 	bool IsGameOver = false;
+
+	int32 EnemyDifficulty = 0;//0 -> RandomPlayer, 1 -> Minimax ...
 
 	void TurnNextPlayer();
 	TArray<IChess_PlayerInterface*> Players;

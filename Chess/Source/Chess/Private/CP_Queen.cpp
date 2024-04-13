@@ -5,11 +5,11 @@
 
 
 
-TArray<FVector2D> ACP_Queen::GetPieceMoves(FVector2D* xy, AChessboard* Board)
+TArray<Chess_Move> ACP_Queen::GetPieceMoves()
 {
-    TArray<FVector2D> moves = TArray<FVector2D>();
-    GetFeasibleDiagonals(xy, Board, moves);
-    GetFeasibleCross(xy, Board, moves);
+    TArray<Chess_Move> moves = TArray<Chess_Move>();
+    GetFeasibleDiagonals(this, moves);
+    GetFeasibleCross(this, moves);
     return moves;
 }
 

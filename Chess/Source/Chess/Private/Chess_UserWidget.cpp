@@ -113,7 +113,7 @@ void UChess_UserWidget::RematchOnClick()
 }
 
 void UChess_UserWidget::ScoreUpdateHandler() {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("ScoreUpdateHandler HUD"));
+    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("ScoreUpdateHandler HUD"));
 
     if (GameInstanceRef)
     {
@@ -130,7 +130,7 @@ void UChess_UserWidget::ScoreUpdateHandler() {
 }
 
 void UChess_UserWidget::ResetHandler() {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Reset HUD"));
+   // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Reset HUD"));
     if (StoryBoardScrollBox)
     {
         TurnsHistory = TArray<UChess_StoryBoardEntry*>();

@@ -5,11 +5,12 @@
 
 
 
-TArray<FVector2D> ACP_Knight::GetPieceMoves(FVector2D* xy, AChessboard* Board)
+TArray<Chess_Move> ACP_Knight::GetPieceMoves()
 {//TODO:Aggiungere impossibilità di automangiarsi
-    TArray<FVector2D> moves = TArray<FVector2D>();
-    int x = (*xy)[0], y = (*xy)[1];
-    int max = Board->BoardSize;
+    TArray<Chess_Move> moves = TArray<Chess_Move>();
+
+    int x = PiecePosition[0], y = PiecePosition[1];
+    int max = ReferredBoard->BoardSize;
     //Possible moves:
     FVector2D knightMoves[8] = {
         FVector2D(1, 2),
@@ -24,11 +25,10 @@ TArray<FVector2D> ACP_Knight::GetPieceMoves(FVector2D* xy, AChessboard* Board)
 
     for (const FVector2D& move : knightMoves) {
         FVector2D newLoc = FVector2D(x + move.X, y + move.Y);
-        if (newLoc.X >= 0 && newLoc.X < max && newLoc.Y >= 0 && newLoc.Y < max && Board->GetPieceColorFromXY(newLoc) != PieceColor) {
-            moves.Add(newLoc);
+        if (newLoc.X >= 0 && newLoc.X < max && newLoc.Y >= 0 && newLoc.Y < max && ReferredBoard->GetPieceColorFromXY(newLoc) != PieceColor) {
+            moves.Add(Chess_Move(PiecePosition, newLoc, ReferredBoard));
         }
     }
-
     return moves;
 }
 

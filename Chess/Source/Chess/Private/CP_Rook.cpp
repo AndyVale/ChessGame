@@ -4,10 +4,10 @@
 #include "CP_Rook.h"
 
 
-TArray<FVector2D> ACP_Rook::GetPieceMoves(FVector2D* xy, AChessboard* Board)//TODO:Creare un metodo di ChessPiece che faccia sta roba in modo da usarlo nella regina
+TArray<Chess_Move> ACP_Rook::GetPieceMoves()//TODO:Creare un metodo di ChessPiece che faccia sta roba in modo da usarlo nella regina
 {
-    TArray<FVector2D> moves = TArray<FVector2D>();
-    GetFeasibleCross(xy, Board, moves);
+    TArray<Chess_Move> moves = TArray<Chess_Move>();
+    GetFeasibleCross(this, moves);
     return moves;
 }
 
