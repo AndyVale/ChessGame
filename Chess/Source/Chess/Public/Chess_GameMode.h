@@ -14,7 +14,6 @@ DECLARE_DELEGATE_OneParam(FOnShowPromotionWidget, ChessColor);
 DECLARE_DELEGATE_TwoParams(FOnMoveUpdate, const FString, int32);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTurnGoBack, int32);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerSwap);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReplayMove, int32, MoveNumber);
 
 
@@ -33,8 +32,6 @@ class CHESS_API AChess_GameMode : public AGameModeBase
 
 public:
 
-	UPROPERTY(BlueprintAssignable)
-	FOnPlayerSwap OnPlayerSwap;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnReplayMove OnReplayMove;
@@ -58,7 +55,6 @@ public:
 
 	bool bIsOnReplay = false;
 	bool bIsGameOver = false;
-	bool IsGameOver = false;
 
 	int32 EnemyDifficulty = 0;//0 -> RandomPlayer, 1 -> Minimax ...
 

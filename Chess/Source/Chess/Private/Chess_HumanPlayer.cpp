@@ -52,7 +52,7 @@ void AChess_HumanPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 void AChess_HumanPlayer::OnTurn()
 {
     bIsMyTurn = true;
-    //GameInstance->SetTurnMessage(TEXT("Human Turn"));
+    GameInstanceRef->SetTurnMessage(TEXT("Human Turn"));
 }
 
 void AChess_HumanPlayer::OnWin()

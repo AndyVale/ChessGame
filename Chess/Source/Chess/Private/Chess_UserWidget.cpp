@@ -21,7 +21,7 @@ void UChess_UserWidget::NativeConstruct()
             {
                 CurrentPlayerText->SetText(FText::FromString("White turn"));
             }
-            GameMode->OnPlayerSwap.AddDynamic(this, &UChess_UserWidget::ShowPlayerHandler);
+            GameInstanceRef->OnMessageChange.AddDynamic(this, &UChess_UserWidget::MessageChangeHandler);
             GameMode->OnShowPromotionWidget.BindUObject(this, &UChess_UserWidget::SetPromotionWidgetVisible);
             GameMode->OnTurnGoBack.AddUObject(this, &UChess_UserWidget::RemoveMovesUntil);
         }
@@ -79,7 +79,6 @@ void UChess_UserWidget::RemoveMovesUntil(int32 moveNumber)
 
 void UChess_UserWidget::SetPromotionWidgetVisible(ChessColor playerColor)
 {
-
     FLinearColor color = playerColor == ChessColor::WHITE ? FLinearColor(999, 999, 999) : FLinearColor(FVector(0, 0, 0));
     if (PawnPromotionWidget) {
         PawnPromotionWidget->SetVisibility(ESlateVisibility::Visible);
@@ -168,17 +167,21 @@ void UChess_UserWidget::MoveHandler(FString stringMove, int32 moveNumber)
     (moveNumber - 1) % 2 == 0 ? moveTurnEntry->SetWhiteMoveText(stringMove) : moveTurnEntry->SetBlackMoveText(stringMove);
 }
 
-void UChess_UserWidget::ShowPlayerHandler()
+void UChess_UserWidget::MessageChangeHandler()
 {
-    if (CurrentPlayerText)
+    if (GameInstanceRef && CurrentPlayerText)
     {
-        if (CurrentPlayerText->GetText().ToString().Compare("White turn") == 0)
-        {
-            CurrentPlayerText->SetText(FText::FromString("Black turn"));
-        }
-        else
-        {
-            CurrentPlayerText->SetText(FText::FromString("White turn"));
-        }
+        CurrentPlayerText->SetText(FText::FromString(GameInstanceRef->CurrentTurnMessage));
     }
+    //if (CurrentPlayerText)
+    //{
+    //    if (CurrentPlayerText->GetText().ToString().Compare("White turn") == 0)
+    //    {
+    //        CurrentPlayerText->SetText(FText::FromString("Black turn"));
+    //    }
+    //    else
+    //    {
+    //        CurrentPlayerText->SetText(FText::FromString("White turn"));
+    //    }
+    //}
 }

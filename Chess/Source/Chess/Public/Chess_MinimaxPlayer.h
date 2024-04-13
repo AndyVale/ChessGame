@@ -38,7 +38,7 @@ public:
 	void MakeMinimaxMove();
 private:
 	TSharedPtr<Chess_Move> FindBestMove(AChessboard* board);
-	float EvaluatePieces(AChessboard* board);
+	float EvaluatePieces(AChessboard* board, bool isMax);
 	//int32 Minimax(AChessboard* board, int32 depth, bool isMax);
 	float AlfaBetaMinimax(float alfa, float beta, AChessboard* board, int32 depth, bool isMax);
 };

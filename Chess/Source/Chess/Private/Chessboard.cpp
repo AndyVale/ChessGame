@@ -289,7 +289,7 @@ void AChessboard::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 }
-/**/
+/*
 //STANDARD CHESSBOARD:
 AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY)
 {
@@ -356,23 +356,27 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	//	}
 	//}
 	return Piece;
-}
-/*
+}*/
 AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY)
 {
 	FVector Location = AChessboard::GetRelativeLocationByXYPosition(InX, InY);
 	FRotator Rotation = FRotator(0, 0, 0);
 	AChessPiece* Piece = nullptr;
 
-	if (InX == 4 && InY == 4) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		Piece->SetColorAndMaterial(BLACK);
+
+	if (InX == 4 && InY == 0) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, Rotation);
+		Piece->SetColorAndMaterial(WHITE);
 	}
-	if (InX == 6 && InY == 7) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
-		Piece->SetColorAndMaterial(BLACK);
-	}
-	if (InX == 4 && InY == 2) {
+	//if (InX == 4 && InY == 4) {
+	//	Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+	//	Piece->SetColorAndMaterial(BLACK);
+	//}
+	//if (InX == 6 && InY == 7) {
+	//	Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
+	//	Piece->SetColorAndMaterial(BLACK);
+	//}
+	if (InX == 6 && InY == 2) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
 		Piece->SetColorAndMaterial(WHITE);
 	}
@@ -409,7 +413,6 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 
 	return Piece;
 }	
-*/
 void AChessboard::GenerateField()
 {
 	const float TileScale = SquareSize / 100;

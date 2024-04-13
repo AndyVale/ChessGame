@@ -86,5 +86,5 @@ private:
 	//Note: Button click is handled in Chess_StoryBoardEntry
 
 	UFUNCTION()
-	void ShowPlayerHandler();
+	void MessageChangeHandler();
 };

@@ -36,7 +36,7 @@ void AChess_RandomPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 void AChess_RandomPlayer::OnTurn()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI (Random) Turn"));
+	GameInstanceRef->SetTurnMessage(TEXT("Random player Wins!"));
 	FTimerHandle TimerHandle;
 	bMyTurn = true;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&] {AChess_RandomPlayer::MakeRandomMove(); }, 1, false);

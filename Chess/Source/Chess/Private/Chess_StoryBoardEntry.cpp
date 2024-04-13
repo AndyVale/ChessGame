@@ -51,7 +51,7 @@ void UChess_StoryBoardEntry::SetWhiteMoveText(FString t)
 {
 	if (WhiteMoveText)
 	{
-		WhiteMoveText->SetText(FText::FromString(t));//TODO: NULLPTR 
+		WhiteMoveText->SetText(FText::FromString(t));
 		bWhiteMoveDone = true;
 	}
 	else

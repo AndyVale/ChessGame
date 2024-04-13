@@ -47,6 +47,7 @@ FString UChess_GameInstance::GetTurnMessage()
 void UChess_GameInstance::SetTurnMessage(FString Message)
 {
 	CurrentTurnMessage = Message;
+	OnMessageChange.Broadcast();
 }
 
 void UChess_GameInstance::ResetPointsAndGame()

@@ -14,6 +14,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnScoreUpdate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReset);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRematch);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMessageChange);
 
 
 UCLASS()
@@ -35,16 +36,19 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnRematch OnRematch;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(BlueprintAssignable)
+	FOnMessageChange OnMessageChange;
+
+	//UPROPERTY(EditAnywhere)
 	int32 ScoreHumanPlayer = 0;
 
 	// score value for AI player
-	UPROPERTY(EditAnywhere)
+	//UPROPERTY(EditAnywhere)
 	int32 ScoreAIPlayer = 0;
 
 	// message to show every turn
-	UPROPERTY(EditAnywhere)
-	FString CurrentTurnMessage = "Current Player";
+	//UPROPERTY(EditAnywhere)
+	FString CurrentTurnMessage;
 
 	// increment the score for human player and broadcast to update points
 	void IncrementScoreHumanPlayer();
@@ -59,7 +63,7 @@ public:
 	int32 GetScoreAIPlayer();
 
 	// get the current turn message
-	UFUNCTION(BlueprintCallable)
+	//UFUNCTION(BlueprintCallable)
 	FString GetTurnMessage();
 
 	// set the turn message
@@ -67,10 +71,10 @@ public:
 	void SetTurnMessage(FString Message);
 
 	UFUNCTION(BlueprintCallable)//start a new game resetting points
-		void ResetPointsAndGame();
+	void ResetPointsAndGame();
 
 	UFUNCTION(BlueprintCallable)//start a new game without resetting points
-		void ResetGame();
+	void ResetGame();
 private:
 	// score value for human players
 	//UFUNCTION(BlueprintCallable)

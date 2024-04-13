@@ -104,7 +104,6 @@ void AChess_GameMode::ToggleCurrentPlayer()
 		CurrentPlayer = 0;
 		TurnNumber += 1;
 	}
-	OnPlayerSwap.Broadcast();
 }
 
 void AChess_GameMode::UpdateLastMove(TSharedPtr<Chess_Move> move)
@@ -129,6 +128,7 @@ void AChess_GameMode::GoBackToActualMove()
 	NextMoveNumber = NextActualMoveNumber;
 	TurnNumber = (NextActualMoveNumber - 1) % 2 == 0 ? (NextActualMoveNumber - 1) / 2 + 1 : (NextActualMoveNumber - 1) / 2 + 1;
 	bIsOnReplay = false;
+	bIsGameOver = false;
 	OnTurnGoBack.Broadcast(NextActualMoveNumber - 1);
 }
 
@@ -174,12 +174,12 @@ void AChess_GameMode::TurnNextPlayer()
 				bIsGameOver = true;
 				//ToggleCurrentPlayer();
 				CurrentPlayer == 0 ? Players[1]->OnWin() : Players[0]->OnWin();
-
 				//ToggleCurrentPlayer();
 			}
 			else if (ControlStall())
 			{
 				bIsGameOver = true;
+				GameInstanceRef->SetTurnMessage(TEXT("Stall!"));
 			}
 
 			//IsGameOver = mate ? mate : ControlStall();//first check for mate, then for stall
@@ -226,5 +226,6 @@ void AChess_GameMode::ResetHandler()
 {
 	TurnNumber = 1;
 	NextMoveNumber = 1;
+	NextActualMoveNumber = 1;
 	ChoosePlayerAndStartGame();
 }
