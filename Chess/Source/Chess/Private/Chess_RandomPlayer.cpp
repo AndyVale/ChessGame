@@ -36,7 +36,7 @@ void AChess_RandomPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 void AChess_RandomPlayer::OnTurn()
 {
-	GameInstanceRef->SetTurnMessage(TEXT("Random player Wins!"));
+	GameInstanceRef->SetTurnMessage(TEXT("Random player turn!"));
 	FTimerHandle TimerHandle;
 	bMyTurn = true;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&] {AChess_RandomPlayer::MakeRandomMove(); }, 1, false);
@@ -81,7 +81,7 @@ void AChess_RandomPlayer::MakeRandomMove() {
 		{
 			//STALLO
 		}
-		if (randomMovePtr && randomMovePtr->bPromotionAfterMove) {
+		if (randomMovePtr && randomMovePtr->MoveClass == MoveType::PAWN_PROMOTION) {
 			TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
 			int32 randomPromotionIndx = FMath::Rand() % randomPromotedPiece.Num();
 			Board->PromoteLastMove(randomPromotedPiece[randomPromotionIndx]);

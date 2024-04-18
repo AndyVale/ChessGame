@@ -45,4 +45,6 @@ protected:
 private:
 	UFUNCTION()
 	void ReplayHandler(int32 moveNumber);
+
+	TArray<Chess_Move> ActiveMoves;//caching selected piece's moves
 };

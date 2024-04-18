@@ -54,6 +54,12 @@ TArray<Chess_Move> ACP_Pawn::GetPieceMoves()
 		}
 	}
 
+	if (FMath::Abs(ReferredBoard->EnPassantPossibleCapture.X - PiecePosition.X) == 1 && ReferredBoard->EnPassantPossibleCapture.Y == PiecePosition.Y)
+	{
+		FVector2D To = FVector2D(ReferredBoard->EnPassantPossibleCapture.X, ReferredBoard->EnPassantPossibleCapture.Y + (PieceColor == ChessColor::WHITE ? -1 : +1));
+		moves.Add(Chess_Move(PiecePosition, To, ReferredBoard, ReferredBoard->EnPassantPossibleCapture));
+	}
+
 	return moves;
 }
 

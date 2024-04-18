@@ -68,7 +68,7 @@ void AChess_MinimaxPlayer::MakeMinimaxMove()
 	if (miniMaxMove)
 	{
 		GM->Board->MakeAMove(miniMaxMove, false);
-		if (miniMaxMove->bPromotionAfterMove) {
+		if (miniMaxMove->MoveClass == MoveType::PAWN_PROMOTION) {
 			TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
 			int32 randomPromotionIndx = 3;//FMath::Rand() % randomPromotedPiece.Num();
 			GM->Board->PromoteLastMove(randomPromotedPiece[randomPromotionIndx]);
@@ -111,7 +111,7 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 		{
 			visitedNode++;
 			move.MakeMove(true);
-			if (move.bPromotionAfterMove)
+			if (move.MoveClass == MoveType::PAWN_PROMOTION)
 			{
 				move.PromotePawn(true, board->Queen);
 			}
@@ -154,7 +154,7 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 		for (Chess_Move& move : moves)
 		{
 			move.MakeMove(true);
-			if (move.bPromotionAfterMove)
+			if (move.MoveClass == MoveType::PAWN_PROMOTION)
 			{
 				move.PromotePawn(true, board->Queen);
 			}
@@ -262,7 +262,7 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 			{
 				stall = false;
 				move.MakeMove(true);
-				if (move.bPromotionAfterMove)
+				if (move.MoveClass == MoveType::PAWN_PROMOTION)
 				{
 					move.PromotePawn(true, board->Queen);
 				}
@@ -311,7 +311,7 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 			{
 				stall = false;
 				move.MakeMove(true);
-				if (move.bPromotionAfterMove)
+				if (move.MoveClass == MoveType::PAWN_PROMOTION)
 				{
 					move.PromotePawn(true, board->Queen);
 				}

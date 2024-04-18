@@ -97,7 +97,7 @@ void AChess_HumanPlayer::OnClick()
             {
                 if (CurrPiece->PieceColor == MyColor) {
                     SelectedPiece = CurrPiece;
-                    Board->GetLegalSquares(SelectedPiece, true);
+                    ActiveMoves = Board->GetMovesAndShowHints(CurrPiece, true);
                 }
                 else {
                     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("You have to select a piece of your color!"));
@@ -112,21 +112,40 @@ void AChess_HumanPlayer::OnClick()
             Cast<AChessPiece>(Hit.GetActor()) ? CurrClicked = Cast<AChessPiece>(Hit.GetActor()) : CurrClicked = Cast<ASquare>(Hit.GetActor());
             FVector2D oldLoc = Board->GetXYPositionByRelativeLocation(SelectedPiece->GetActorLocation());
             FVector2D newLoc = Board->GetXYPositionByRelativeLocation(CurrClicked->GetActorLocation());
-            TSharedPtr<Chess_Move> move = MakeShareable(new Chess_Move(oldLoc, newLoc, Board));
+            TSharedPtr<Chess_Move> move = nullptr;
+
+            if (oldLoc == newLoc)//undo move
+            {
+                GameMode->Board->CancelFeasibleSquares();
+                ActiveMoves.Empty();
+                SelectedPiece = nullptr;
+                return;
+            }
+
+            for (Chess_Move& tmpMove : ActiveMoves)
+            {
+                if (tmpMove.From == oldLoc && tmpMove.To == newLoc)
+                {
+                    move = MakeShareable<Chess_Move>(new Chess_Move(tmpMove));
+                    break;
+                }
+            }
+
 
             if (GameMode->bIsOnReplay)
             {
                 GameMode->GoBackToActualMove();//Remove history board after the performed move
             }
 
-            if (CurrClicked && Board->MakeASafeMove(move))
+            if (CurrClicked && move)
             {//if MakeASafeMove return the move is done, otherwise the piece is deselected
+                Board->MakeAMove(move, false);
                 GameMode->UpdateLastMove(move);
                 bIsMyTurn = false;
             }
 
             GameMode->Board->CancelFeasibleSquares();
-
+            ActiveMoves.Empty();
             SelectedPiece = nullptr;
             if (!bIsMyTurn)
             {

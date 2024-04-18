@@ -192,9 +192,13 @@ bool AChess_GameMode::ControlChecks() //TODO: Stall check
 	bool mate = false;
 	ChessColor colorToControl = CurrentPlayer == 0 ? WHITE : BLACK;
 
-	if (Board->GetKingPosition(colorToControl)) {
-		if (Board->CheckControl(colorToControl)) {
-			if (Board->MateControl(colorToControl)) {
+	//if (Board->GetKingPosition(colorToControl)) {
+		//if (Board->CheckControl(colorToControl))
+		if (Board->GetMoveShowedOnBoard() && Board->GetMoveShowedOnBoard()->PlayerOnCheck == colorToControl)
+		{
+			//if (Board->MateControl(colorToControl))
+			if(Board->GetMoveShowedOnBoard()->PlayerOnCheckMate == colorToControl)
+			{
 				//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("--------MATTO!!--------"));
 				UE_LOG(LogTemp, Error, TEXT("--------MATTO!!--------"));
 
@@ -205,7 +209,7 @@ bool AChess_GameMode::ControlChecks() //TODO: Stall check
 				Board->GetSquareFromXY(*Board->GetKingPosition(colorToControl))->SetDangerColor();
 			}
 		}
-	}
+	//}
 
 	return mate;
 }

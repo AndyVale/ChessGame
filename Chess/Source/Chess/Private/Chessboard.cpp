@@ -3,6 +3,7 @@
 #include "Chessboard.h"
 #include "ChessPiece.h"
 #include "CP_King.h"
+#include "CP_Pawn.h"
 #include <Chess_GameInstance.h>
 #include "Chess_GameMode.h"
 #include <Kismet/GameplayStatics.h>
@@ -24,6 +25,10 @@ AChessboard::AChessboard()
 	SquareSize = 100;
 	BlackKing = nullptr;
 	WhiteKing = nullptr;
+	bCastleBlackLong = false;//true;
+	bCastleBlackShort = false;//true;
+	bCastleWhiteLong = false;//true;
+	bCastleWhiteShort = false;//true;
 }
 
 // Called when the game starts or when spawned
@@ -108,6 +113,11 @@ void AChessboard::ResetBoard()
 	//	PositionValue = 0;
 	WhiteMaterial = 0;
 	BlackMaterial = 0;
+	bCastleBlackLong = true;
+	bCastleBlackShort = true;
+	bCastleWhiteLong = true;
+	bCastleWhiteShort = true;
+	EnPassantPossibleCapture = FVector2D(-10, -10);
 	WhiteKing = BlackKing = nullptr;
 	WhitePieces.Empty();
 	BlackPieces.Empty();
@@ -236,25 +246,28 @@ ChessColor AChessboard::GetPieceColorFromXY(FVector2D xy)
 	return NAC;
 }
 
-TArray<FVector2D> AChessboard::GetLegalSquares(AChessPiece* Piece, bool showMoves)
+TSharedPtr<Chess_Move> AChessboard::GetMoveShowedOnBoard()
+{
+	if (!StackMoves.IsEmpty())
+	{
+		return StackMoves.Top();
+	}
+	return nullptr;
+}
+
+TArray<Chess_Move> AChessboard::GetMovesAndShowHints(AChessPiece* Piece, bool showMoves)
 {
 	TArray<FVector2D> xys = TArray<FVector2D>();
-	for(Chess_Move& move : Piece->GetPieceLegalMoves())
+	TArray<Chess_Move> moves = Piece->GetPieceLegalMoves();
+	for (Chess_Move& move : moves)
 	{
-		xys.Add(move.To);
-	}
-
-	if (showMoves)
-	{
-		for (FVector2D& xy : xys)
-		{
-			ASquare* square = GetSquareFromXY(xy);
-			if (square && !square->IsDanger()) {
-				square->SetAsSelected();
-			}
+		FVector2D xy = move.To;
+		ASquare* square = GetSquareFromXY(xy);
+		if (square && !square->IsDanger()) {
+			square->SetAsSelected();
 		}
 	}
-	return xys;
+	return moves;
 }
 
 void AChessboard::CancelFeasibleSquares()
@@ -302,7 +315,6 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	if (InY == 1 || InY == 6)
 	{
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		//Players[i]->Sign = i == CurrentPlayer ? ESign::X : ESign::O;
 		if (Piece)
 			Piece->SetColorAndMaterial(InY == 6 ? WHITE : BLACK);//WHITE pieces are in Y=6
 	}
@@ -359,40 +371,64 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 }*/
 AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY)
 {
+	//TODO: TESTA L'ARROCCO ARTIFICIALMENTE
 	FVector Location = AChessboard::GetRelativeLocationByXYPosition(InX, InY);
 	FRotator Rotation = FRotator(0, 0, 0);
 	AChessPiece* Piece = nullptr;
 
 
-	if (InX == 4 && InY == 0) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, Rotation);
-		Piece->SetColorAndMaterial(WHITE);
-	}
-	//if (InX == 4 && InY == 4) {
-	//	Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-	//	Piece->SetColorAndMaterial(BLACK);
-	//}
-	//if (InX == 6 && InY == 7) {
-	//	Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
-	//	Piece->SetColorAndMaterial(BLACK);
-	//}
-	if (InX == 6 && InY == 2) {
+	if (InX == 0 && InY == 0) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
-		Piece->SetColorAndMaterial(WHITE);
+		Piece->SetColorAndMaterial(BLACK);
+	}
+	if (InX == 0 && InY == 1) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+		Piece->SetColorAndMaterial(BLACK);
 	}
 
-	if (InX == 5 && InY == 2) {
+	if (InX == 7 && InY == 0) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
+		Piece->SetColorAndMaterial(BLACK);
+	}
+	if (InX == 7 && InY == 1) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+		Piece->SetColorAndMaterial(BLACK);
+	}
+
+
+	if (InX == 4 && InY == 7) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, Rotation);
 		Piece->SetColorAndMaterial(WHITE);
 		WhiteKing = Piece;
 	}
 
-	if (InX == 7 && InY == 0) {
+	if (InX == 4 && InY == 0) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, Rotation);
 		Piece->SetColorAndMaterial(BLACK);
 		BlackKing = Piece;
 	}
 
+	if (InX == 1 && InY == 6) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+		Piece->SetColorAndMaterial(BLACK);
+	}
+	if (InX == 0 && InY == 7) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
+		Piece->SetColorAndMaterial(WHITE);
+	}
+	if (InX == 0 && InY == 6) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+		Piece->SetColorAndMaterial(WHITE);
+	}
+
+	if (InX == 7 && InY == 7) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
+		Piece->SetColorAndMaterial(WHITE);
+	}
+	if (InX == 7 && InY == 6) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+		Piece->SetColorAndMaterial(WHITE);
+	}
 
 	//if (Piece)
 	//{
@@ -412,7 +448,8 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	//}
 
 	return Piece;
-}	
+}
+
 void AChessboard::GenerateField()
 {
 	const float TileScale = SquareSize / 100;
@@ -669,22 +706,6 @@ FVector2D* AChessboard::GetKingPosition(ChessColor C)
 	return nullptr;
 }
 
-bool AChessboard::MakeASafeMove(TSharedPtr<Chess_Move> move)
-{
-	FVector2D oldPosition = move->From;
-	FVector2D newPosition = move->To;
-	ASquare* selectedSquare = GetSquareFromXY(newPosition);
-	if (selectedSquare && selectedSquare->IsSelected())
-	{
-		if (GetPieceFromXY(newPosition) != GetPieceFromXY(oldPosition))
-		{
-			MakeAMove(move, false);
-			return true;
-		}
-	}
-	return false;
-}
-
 void AChessboard::MakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 {
 	if (move == nullptr)
@@ -697,54 +718,29 @@ void AChessboard::MakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 	delta += WhiteMaterial - BlackMaterial;
 	if (!simulate)
 	{
-		/*if (move->GetMoveColor() == WHITE)
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("From %f %f To %f %f"), move->From.X, move->From.Y, move->To.X, move->To.Y));
-		else
-			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, FString::Printf(TEXT("From %f %f To %f %f"), move->From.X, move->From.Y, move->To.X, move->To.Y));
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, FString::Printf(TEXT("Board value: %f"), PositionValue));
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Delta: %f"), delta));
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString::Printf(TEXT("Move value: %f"), move->MoveValue));
-
-		move->PieceFrom->GetPieceLegalMoves();
-		if (CheckControl(WHITE))//AI win
-		{
-			if (MateControl(WHITE))
-			{
-				value = -MAX_flt + 1;
-			}
-		}
-
-		if (CheckControl(BLACK))//AI lose
-		{
-			if (MateControl(BLACK))
-			{
-				value = MAX_flt - 1;
-			}
-		}*/
-
 		float pv = WhiteMaterial - BlackMaterial;//white material - black material
 		int32 tmp1 = move->From.X, tmp2 = move->From.Y, tmp3 = move->To.X, tmp4 = move->To.Y;
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Il valore della mossa da %d, %d a %d, %d è %f:->%f"), tmp1, tmp2, tmp3, tmp4, value, pv));
 
-
 		StackMoves.Push(move);
 		//OnMove.Broadcast(move->ToString());
 
-		if (move->bPromotionAfterMove) {
+		if (move->MoveClass == MoveType::PAWN_PROMOTION) {
 			UE_LOG(LogTemp, Error, TEXT("Spawn HUD"));
 			if (AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode())) {
 				GameMode->ShowPromotionWidget(move->GetMoveColor());
 			}
 		}
 	}
-}
+	//Enpassant handling:
 
-void AChessboard::RollbackMove(TSharedPtr<Chess_Move> move, bool simulate)
-{
-	move->RollbackMove(simulate);
-	if (!simulate)
+	EnPassantPossibleCapture = FVector2D(-10, -10);
+	if (FMath::Abs(move->To.Y - move->From.Y) == 2 && FMath::Abs(move->To.X - move->From.X) == 0)
 	{
-		//StackMoves.Pop();
+		if (ACP_Pawn* PawnTriggeringEnPassant = Cast<ACP_Pawn>(move->CapturingPiece))
+		{
+			EnPassantPossibleCapture = move->To;
+		}
 	}
 }
 

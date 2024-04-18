@@ -60,6 +60,8 @@ public:
 
 	ChessColor GetPieceColorFromXY(FVector2D xy);
 
+	TSharedPtr<Chess_Move> GetMoveShowedOnBoard();
+
 	UPROPERTY(Transient)
 	TMap<FVector2D, ASquare*> XY_Square;
 
@@ -83,13 +85,9 @@ public:
 
 	FVector2D* GetKingPosition(ChessColor C);
 
-	bool MakeASafeMove(TSharedPtr<Chess_Move> move);
-
 	void MakeAMove(TSharedPtr<Chess_Move> move, bool simulate);
 
-	void RollbackMove(TSharedPtr<Chess_Move> move, bool simulate);
-
-	TArray<FVector2D> GetLegalSquares(AChessPiece* Piece, bool Show);
+	TArray<Chess_Move> GetMovesAndShowHints(AChessPiece* Piece, bool Show);
 
 	void CancelFeasibleSquares();
 
@@ -106,6 +104,14 @@ public:
 	FVector2D GetXYPositionByRelativeLocation(const FVector& Location) const;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	FVector2D EnPassantPossibleCapture = FVector2D(-10, -10);//setted to a legal position by makemove if there are conditions for enpassant
+
+	//Castle variables, updated when a move is performed (chess_move class)
+	bool bCastleBlackLong = false;//true;
+	bool bCastleBlackShort = false;//true;
+	bool bCastleWhiteLong = false;//true;
+	bool bCastleWhiteShort = false;//true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	TSubclassOf<AChessPiece> Bishop;
@@ -155,4 +161,5 @@ private:
 	//void FilterMovesAvoidCheck(AChessPiece* p, TArray<FVector2D>& moves);
 
 	void PushAndPopUntilMove(int32 moveNumber);
+
 };
