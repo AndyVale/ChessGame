@@ -25,10 +25,10 @@ AChessboard::AChessboard()
 	SquareSize = 100;
 	BlackKing = nullptr;
 	WhiteKing = nullptr;
-	bCastleBlackLong = false;//true;
-	bCastleBlackShort = false;//true;
-	bCastleWhiteLong = false;//true;
-	bCastleWhiteShort = false;//true;
+	bCastleBlackLong = true;
+	bCastleBlackShort = true;
+	bCastleWhiteLong = true;
+	bCastleWhiteShort = true;
 }
 
 // Called when the game starts or when spawned
@@ -369,6 +369,7 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	//}
 	return Piece;
 }*/
+
 AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY)
 {
 	//TODO: TESTA L'ARROCCO ARTIFICIALMENTE
@@ -408,17 +409,17 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 		BlackKing = Piece;
 	}
 
-	if (InX == 1 && InY == 6) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		Piece->SetColorAndMaterial(BLACK);
-	}
+	//if (InX == 1 && InY == 6) {
+	//	Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+	//	Piece->SetColorAndMaterial(BLACK);
+	//}
 	if (InX == 0 && InY == 7) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
 		Piece->SetColorAndMaterial(WHITE);
 	}
-	if (InX == 0 && InY == 6) {
+	if (InX == 1 && InY == 6) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		Piece->SetColorAndMaterial(WHITE);
+		Piece->SetColorAndMaterial(BLACK);
 	}
 
 	if (InX == 7 && InY == 7) {
@@ -427,7 +428,7 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	}
 	if (InX == 7 && InY == 6) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		Piece->SetColorAndMaterial(WHITE);
+		Piece->SetColorAndMaterial(BLACK);
 	}
 
 	//if (Piece)
@@ -559,7 +560,7 @@ void AChessboard::RemovePiece(AChessPiece* p)
 
 FVector AChessboard::GetRelativeLocationByXYPosition(const int32 InX, const int32 InY) const
 {
-	return SquareSize * FVector(InX, InY, 0) + FVector(0, 0, 20);
+	return SquareSize * FVector(InX, InY, 0) + FVector(0, 0, 10);
 }
 
 FVector2D AChessboard::GetXYPositionByRelativeLocation(const FVector& Location) const
@@ -706,7 +707,7 @@ FVector2D* AChessboard::GetKingPosition(ChessColor C)
 	return nullptr;
 }
 
-void AChessboard::MakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
+void AChessboard::HandledMakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 {
 	if (move == nullptr)
 	{
@@ -725,8 +726,8 @@ void AChessboard::MakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 		StackMoves.Push(move);
 		//OnMove.Broadcast(move->ToString());
 
-		if (move->MoveClass == MoveType::PAWN_PROMOTION) {
-			UE_LOG(LogTemp, Error, TEXT("Spawn HUD"));
+		if (move->MoveClass == MoveType::PAWN_PROMOTION && StackUndoMoves.IsEmpty()) {//if is a promotion and is not a replay -> spawn widget 
+			UE_LOG(LogTemp, Error, TEXT("Spawn promotion HUD"));
 			if (AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode())) {
 				GameMode->ShowPromotionWidget(move->GetMoveColor());
 			}
@@ -735,11 +736,38 @@ void AChessboard::MakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 	//Enpassant handling:
 
 	EnPassantPossibleCapture = FVector2D(-10, -10);
-	if (FMath::Abs(move->To.Y - move->From.Y) == 2 && FMath::Abs(move->To.X - move->From.X) == 0)
+	if (FMath::Abs(move->To.Y - move->From.Y) == 2 && FMath::Abs(move->To.X - move->From.X) == 0)//when a piece move by two in y and 0 in x
 	{
-		if (ACP_Pawn* PawnTriggeringEnPassant = Cast<ACP_Pawn>(move->CapturingPiece))
+		if (ACP_Pawn* PawnTriggeringEnPassant = Cast<ACP_Pawn>(move->CapturingPiece))//and is a pawn
 		{
-			EnPassantPossibleCapture = move->To;
+			EnPassantPossibleCapture = move->To;//can be captured enpassant
+		}
+	}
+}
+
+void AChessboard::HandledRollbackAMove(TSharedPtr<Chess_Move> move, bool simulate)
+{
+	if (move == nullptr)
+	{
+		return;
+	}
+	move->RollbackMove(simulate);
+	if (!simulate)
+	{
+		StackUndoMoves.Push(move);
+	}
+
+	//Enpassant handling
+	EnPassantPossibleCapture = FVector2D(-10, -10);
+	if (!StackMoves.IsEmpty())
+	{
+		TSharedPtr<Chess_Move> passedMove = StackMoves.Top();//look at last move for enpassant capture
+		if (FMath::Abs(passedMove->To.Y - passedMove->From.Y) == 2 && FMath::Abs(passedMove->To.X - passedMove->From.X) == 0)
+		{
+			if (ACP_Pawn* PawnTriggeringEnPassant = Cast<ACP_Pawn>(passedMove->CapturingPiece))
+			{
+				EnPassantPossibleCapture = passedMove->To;
+			}
 		}
 	}
 }
@@ -747,15 +775,16 @@ void AChessboard::MakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 void AChessboard::PushAndPopUntilMove(int32 moveNumber)
 {
 	int32 actualMoveNumber = StackMoves.Num();
-	if (moveNumber <= actualMoveNumber)
+	TSharedPtr<Chess_Move> tmpMove;
+	if (moveNumber <= actualMoveNumber)//replay back
 	{
 		for (int32 i = 0; i < actualMoveNumber - moveNumber; i++)
 		{
 			if (!StackMoves.IsEmpty())
 			{
-				TSharedPtr<Chess_Move> tmpMove = StackMoves.Pop();
-				tmpMove->RollbackMove(false);
-				StackUndoMoves.Push(tmpMove);
+				tmpMove = StackMoves.Pop();
+				HandledRollbackAMove(tmpMove, false);
+				//StackUndoMoves.Push(tmpMove);
 			}
 			else
 			{
@@ -769,9 +798,9 @@ void AChessboard::PushAndPopUntilMove(int32 moveNumber)
 		{
 			if (!StackUndoMoves.IsEmpty())
 			{
-				TSharedPtr<Chess_Move> tmpMove = StackUndoMoves.Pop();
-				tmpMove->MakeMove(false);
-				StackMoves.Push(tmpMove);
+				tmpMove = StackUndoMoves.Pop();
+				HandledMakeAMove(tmpMove, false);
+				//StackMoves.Push(tmpMove);
 			}
 			else
 			{

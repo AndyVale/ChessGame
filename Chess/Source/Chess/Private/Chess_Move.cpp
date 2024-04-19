@@ -129,7 +129,7 @@ void Chess_Move::MakeMove(bool simulate)
 
     if (MoveClass == MoveType::CASTLE)
     {
-        CastleMove(simulate);
+        CastleMove(simulate); //TODO //IL MINIMAX NON FUNZIONA CON L'ARROCO, alcune CastledRook risultano null (inconsistenza tra arrocchi possibili ed effettivamente fattibili)
     }
 
     if (!simulate)
@@ -226,12 +226,12 @@ void Chess_Move::UpdateCastleVariables()
 {
     bool isWhite = GetMoveColor() == ChessColor::WHITE;
 
-    if (isWhite && ReferredBoard->bCastleWhiteLong && From == FVector2D(0, 7) || (!isWhite && ReferredBoard->bCastleWhiteLong && To == FVector2D(0, 7)))//long castle was feasible and moved the rook/captured the rook
+    if ((isWhite && ReferredBoard->bCastleWhiteLong && From == FVector2D(0, 7)) || (!isWhite && ReferredBoard->bCastleWhiteLong && To == FVector2D(0, 7)))//long castle was feasible and moved the rook/captured the rook
     {
         ReferredBoard->bCastleWhiteLong = false;
         bSetLongCastleOnUndo = true;
     }
-    else if (isWhite && ReferredBoard->bCastleWhiteShort && From == FVector2D(7, 7) || (!isWhite && ReferredBoard->bCastleWhiteShort && To == FVector2D(7, 7)))//same for king side rook
+    else if ((isWhite && ReferredBoard->bCastleWhiteShort && From == FVector2D(7, 7)) || (!isWhite && ReferredBoard->bCastleWhiteShort && To == FVector2D(7, 7)))//same for king side rook
     {
         ReferredBoard->bCastleWhiteShort = false;
         bSetShortCastleOnUndo = true;
@@ -250,12 +250,12 @@ void Chess_Move::UpdateCastleVariables()
         }
     }
     
-    if ((!isWhite && ReferredBoard->bCastleBlackLong && From == FVector2D(0, 0) || (isWhite && ReferredBoard->bCastleBlackLong && To == FVector2D(0, 0))))//long castle was feasible and moved the rook/captured the rook
+    if ((!isWhite && ReferredBoard->bCastleBlackLong && From == FVector2D(0, 0)) || (isWhite && ReferredBoard->bCastleBlackLong && To == FVector2D(0, 0)))//long castle was feasible and moved the rook/captured the rook
     {
         ReferredBoard->bCastleBlackLong = false;
         bSetLongCastleOnUndo = true;
     }
-    else if ((!isWhite && ReferredBoard->bCastleBlackShort && From == FVector2D(7, 0) || (isWhite && ReferredBoard->bCastleBlackShort && To == FVector2D(7, 0))))//same for king side rook
+    else if ((!isWhite && ReferredBoard->bCastleBlackShort && From == FVector2D(7, 0)) || (isWhite && ReferredBoard->bCastleBlackShort && To == FVector2D(7, 0)))//same for king side rook
     {
         ReferredBoard->bCastleBlackShort = false;
         bSetShortCastleOnUndo = true;
@@ -279,13 +279,30 @@ void Chess_Move::RollbackCastleVariables()
 {
     if (bSetLongCastleOnUndo)
     {
-        GetMoveColor() == ChessColor::WHITE ? ReferredBoard->bCastleWhiteLong = true : ReferredBoard->bCastleBlackLong = true;
+        if(GetMoveColor() == ChessColor::WHITE)
+        {
+            ReferredBoard->bCastleWhiteLong = true;
+        }
+        else
+        {
+            ReferredBoard->bCastleBlackLong = true;
+        }
     }
     if (bSetShortCastleOnUndo)
     {
-        GetMoveColor() == ChessColor::WHITE ? ReferredBoard->bCastleWhiteShort = true : ReferredBoard->bCastleBlackShort = true;
+        if (GetMoveColor() == ChessColor::WHITE)
+        {
+            ReferredBoard->bCastleWhiteShort = true;
+        }
+        else
+        {
+            ReferredBoard->bCastleBlackShort = true;
+        }
     }
 }
+
+//GetMoveColor() == ChessColor::WHITE ? ReferredBoard->bCastleWhiteShort = true : ReferredBoard->bCastleBlackShort = true;
+//GetMoveColor() == ChessColor::WHITE ? ReferredBoard->bCastleWhiteShort = true : ReferredBoard->bCastleBlackShort = true;
 
 FString Chess_Move::ToString() const
 {
@@ -394,6 +411,7 @@ void Chess_Move::PromotePawnRollback(bool simulate)
     }
     else {//if was a simulate move destory the promoted piece to avoid memory leak (TODO: controlla se unreal lo fa già da solo)
         PawnPromotionAusRef->Destroy();
+        PawnPromotionAusRef = nullptr;//to make it possible tu reassign a new piece as promoted piece
     }
 }
 
@@ -401,7 +419,7 @@ void Chess_Move::PromotePawn(bool simulate, TSubclassOf<AChessPiece> selectedPie
 {
     if (selectedPiece != nullptr)//first promotion (not executed if is a replay)
     {
-        FVector position = ReferredBoard->GetRelativeLocationByXYPosition(To.X, To.Y) + FVector(0, 0, 10);
+        FVector position = ReferredBoard->GetRelativeLocationByXYPosition(To.X, To.Y);
         FRotator rotation = FRotator(0, 0, 0);
         ChessColor pColor = GetMoveColor();
         if (PawnPromotionAusRef != nullptr) {//never reached (in theory)
@@ -410,9 +428,6 @@ void Chess_Move::PromotePawn(bool simulate, TSubclassOf<AChessPiece> selectedPie
         PawnPromotionAusRef = ReferredBoard->GetWorld()->SpawnActor<AChessPiece>(selectedPiece, position, rotation);
         PawnPromotionAusRef->SetColorAndMaterial(pColor);
         PawnPromotionAusRef->SetActorHiddenInGame(true);
-    }
-    else {
-        int a = 4;
     }
 
     if (PawnPromotionAusRef) {//swap pieces
@@ -470,7 +485,6 @@ void Chess_Move::EnPassantCaptureRollback(bool simulate)
 
 void Chess_Move::CastleMove(bool simulate)
 {
-    return;
     FVector2D newRookPosition;
     if (bIsQueenSide)
     {
@@ -495,7 +509,6 @@ void Chess_Move::CastleMove(bool simulate)
 
 void Chess_Move::CastleMoveRollback(bool simulate)
 {
-    return;
     FVector2D oldRookPosition;
     if (bIsQueenSide)
     {

@@ -74,7 +74,7 @@ void AChess_RandomPlayer::MakeRandomMove() {
 		{
 			int32 randomMoveIndx = FMath::Rand() % numSize;
 			randomMovePtr = MakeShareable(new Chess_Move(possibleMoves[randomMoveIndx]));
-			Board->MakeAMove(randomMovePtr, false);
+			Board->HandledMakeAMove(randomMovePtr, false);
 			//Chess_Move succMove = Chess_Move(oldLoc, newLoc);
 		}
 		else

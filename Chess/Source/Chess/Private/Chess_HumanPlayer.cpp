@@ -139,7 +139,7 @@ void AChess_HumanPlayer::OnClick()
 
             if (CurrClicked && move)
             {//if MakeASafeMove return the move is done, otherwise the piece is deselected
-                Board->MakeAMove(move, false);
+                Board->HandledMakeAMove(move, false);
                 GameMode->UpdateLastMove(move);
                 bIsMyTurn = false;
             }

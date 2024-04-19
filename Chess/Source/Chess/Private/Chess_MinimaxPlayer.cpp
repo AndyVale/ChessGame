@@ -67,7 +67,7 @@ void AChess_MinimaxPlayer::MakeMinimaxMove()
 
 	if (miniMaxMove)
 	{
-		GM->Board->MakeAMove(miniMaxMove, false);
+		GM->Board->HandledMakeAMove(miniMaxMove, false);
 		if (miniMaxMove->MoveClass == MoveType::PAWN_PROMOTION) {
 			TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
 			int32 randomPromotionIndx = 3;//FMath::Rand() % randomPromotedPiece.Num();

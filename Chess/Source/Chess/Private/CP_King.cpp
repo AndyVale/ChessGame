@@ -36,39 +36,39 @@ TArray<Chess_Move> ACP_King::GetPieceMoves()
     queenSideCastle = PieceColor == ChessColor::WHITE ? ReferredBoard->bCastleWhiteLong : ReferredBoard->bCastleBlackLong;
     kingSideCastle = PieceColor == ChessColor::WHITE ? ReferredBoard->bCastleWhiteShort : ReferredBoard->bCastleBlackShort;
    
-    //if(PiecePosition.Y == 7 && PieceColor == WHITE || PiecePosition.Y == 0 && PieceColor == BLACK)
-    //if (!ReferredBoard->GetMoveShowedOnBoard() || ReferredBoard->GetMoveShowedOnBoard() && ReferredBoard->GetMoveShowedOnBoard()->PlayerOnCheck != PieceColor)//castle is legal only if the king is not under check
-    //{
-    //    if (queenSideCastle)
-    //    {
-    //        for (j = 3; j > 0; j --){
-    //            AChessPiece* tmp= ReferredBoard->GetPieceFromXY(FVector2D(j, PiecePosition.Y));
-    //            if (tmp != nullptr)
-    //            {
-    //                break;
-    //            }
-    //        }
-    //        if (j == 0)
-    //        {
-    //            moves.Add(Chess_Move(PiecePosition, FVector2D(2, PiecePosition.Y), ReferredBoard, true));
-    //        }
-    //    }
-    //    
-    //    if (kingSideCastle)
-    //    {
-    //        for (j = 5; j < 7; j++) {
-    //            AChessPiece* tmp = ReferredBoard->GetPieceFromXY(FVector2D(j, PiecePosition.Y));
-    //            if (tmp != nullptr)
-    //            {
-    //                break;
-    //            }
-    //        }
-    //        if (j == 7)
-    //        {
-    //            moves.Add(Chess_Move(PiecePosition, FVector2D(6, PiecePosition.Y), ReferredBoard, false));
-    //        }
-    //    }
-    //}
+    if(PiecePosition.Y == 7 && PieceColor == WHITE || PiecePosition.Y == 0 && PieceColor == BLACK)
+    if (!ReferredBoard->GetMoveShowedOnBoard() || ReferredBoard->GetMoveShowedOnBoard() && ReferredBoard->GetMoveShowedOnBoard()->PlayerOnCheck != PieceColor)//castle is legal only if the king is not under check
+    {
+        if (queenSideCastle)
+        {
+            for (j = 3; j > 0; j --){
+                AChessPiece* tmp= ReferredBoard->GetPieceFromXY(FVector2D(j, PiecePosition.Y));
+                if (tmp != nullptr)
+                {
+                    break;
+                }
+            }
+            if (j == 0)
+            {
+                moves.Add(Chess_Move(PiecePosition, FVector2D(2, PiecePosition.Y), ReferredBoard, true));
+            }
+        }
+        
+        if (kingSideCastle)
+        {
+            for (j = 5; j < 7; j++) {
+                AChessPiece* tmp = ReferredBoard->GetPieceFromXY(FVector2D(j, PiecePosition.Y));
+                if (tmp != nullptr)
+                {
+                    break;
+                }
+            }
+            if (j == 7)
+            {
+                moves.Add(Chess_Move(PiecePosition, FVector2D(6, PiecePosition.Y), ReferredBoard, false));
+            }
+        }
+    }
     
     return moves;
 }

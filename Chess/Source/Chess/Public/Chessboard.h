@@ -85,7 +85,9 @@ public:
 
 	FVector2D* GetKingPosition(ChessColor C);
 
-	void MakeAMove(TSharedPtr<Chess_Move> move, bool simulate);
+	void HandledMakeAMove(TSharedPtr<Chess_Move> move, bool simulate);
+
+	void HandledRollbackAMove(TSharedPtr<Chess_Move> move, bool simulate);
 
 	TArray<Chess_Move> GetMovesAndShowHints(AChessPiece* Piece, bool Show);
 
