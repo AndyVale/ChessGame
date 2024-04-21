@@ -302,7 +302,7 @@ void AChessboard::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 }
-/*
+
 //STANDARD CHESSBOARD:
 AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY)
 {
@@ -368,8 +368,8 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	//	}
 	//}
 	return Piece;
-}*/
-
+}
+/*
 AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY)
 {
 	//TODO: TESTA L'ARROCCO ARTIFICIALMENTE
@@ -391,9 +391,17 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
 		Piece->SetColorAndMaterial(BLACK);
 	}
-	if (InX == 7 && InY == 1) {
+	//if (InX == 7 && InY == 1) {
+	//	Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+	//	Piece->SetColorAndMaterial(BLACK);
+	//}
+	if (InX == 6 && InY == 1) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		Piece->SetColorAndMaterial(BLACK);
+		Piece->SetColorAndMaterial(WHITE);
+	}
+	if (InX == 1 && InY == 1) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+		Piece->SetColorAndMaterial(WHITE);
 	}
 
 
@@ -426,10 +434,10 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
 		Piece->SetColorAndMaterial(WHITE);
 	}
-	if (InX == 7 && InY == 6) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		Piece->SetColorAndMaterial(BLACK);
-	}
+	//if (InX == 7 && InY == 6) {
+	//	Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+	//	Piece->SetColorAndMaterial(BLACK);
+	//}
 
 	//if (Piece)
 	//{
@@ -450,7 +458,7 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 
 	return Piece;
 }
-
+*/
 void AChessboard::GenerateField()
 {
 	const float TileScale = SquareSize / 100;
@@ -709,6 +717,7 @@ FVector2D* AChessboard::GetKingPosition(ChessColor C)
 
 void AChessboard::HandledMakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 {
+	bool wl=bCastleWhiteLong, ws=bCastleWhiteShort, bl=bCastleBlackLong, bs=bCastleBlackShort;
 	if (move == nullptr)
 	{
 		return;
@@ -733,8 +742,12 @@ void AChessboard::HandledMakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 			}
 		}
 	}
-	//Enpassant handling:
+	if (bl != bCastleBlackLong || bs != bCastleBlackShort || ws != bCastleWhiteShort || wl != bCastleWhiteLong)//debug porpouse
+	{
+		UE_LOG(LogTemp, Error, TEXT("Change detected"));
+	}
 
+	//Enpassant handling:
 	EnPassantPossibleCapture = FVector2D(-10, -10);
 	if (FMath::Abs(move->To.Y - move->From.Y) == 2 && FMath::Abs(move->To.X - move->From.X) == 0)//when a piece move by two in y and 0 in x
 	{

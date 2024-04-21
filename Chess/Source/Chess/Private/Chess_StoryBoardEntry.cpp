@@ -70,3 +70,9 @@ void UChess_StoryBoardEntry::SetBlackMoveText(FString t)
 	}
 }
 
+void UChess_StoryBoardEntry::SetAllButtons(bool s)
+{
+	WhiteBackButton->SetIsEnabled(s);
+	BlackBackButton->SetIsEnabled(s);
+}
+

@@ -14,11 +14,11 @@ AChess_HumanPlayer::AChess_HumanPlayer()
     PrimaryActorTick.bCanEverTick = true;
     AutoPossessPlayer = EAutoReceiveInput::Player0;
     //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("DAJE"));
-
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
     SetRootComponent(Camera);
     GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-    Color = WHITE;
+    PlayerColor = WHITE;
+    bIsMyTurn = false;
 }
 
 // Called when the game starts or when spawned
@@ -52,6 +52,10 @@ void AChess_HumanPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 void AChess_HumanPlayer::OnTurn()
 {
     bIsMyTurn = true;
+    if (AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode()))
+    {
+        GameMode->PlayerSwapNotify(true);
+    }
     GameInstanceRef->SetTurnMessage(TEXT("Human Turn"));
 }
 
@@ -110,6 +114,10 @@ void AChess_HumanPlayer::OnClick()
             AActor* CurrClicked = nullptr;//using an AActor beacuse no 'special' methods are used here
             //If clicked obj is a square I have to move, otherwise if obj is a piece eat it, it's handled by MakeASafeMove
             Cast<AChessPiece>(Hit.GetActor()) ? CurrClicked = Cast<AChessPiece>(Hit.GetActor()) : CurrClicked = Cast<ASquare>(Hit.GetActor());
+            if (!CurrClicked)
+            {
+                return;//clicked on background
+            }
             FVector2D oldLoc = Board->GetXYPositionByRelativeLocation(SelectedPiece->GetActorLocation());
             FVector2D newLoc = Board->GetXYPositionByRelativeLocation(CurrClicked->GetActorLocation());
             TSharedPtr<Chess_Move> move = nullptr;
@@ -132,7 +140,7 @@ void AChess_HumanPlayer::OnClick()
             }
 
 
-            if (GameMode->bIsOnReplay)
+            if (GameMode->bIsOnReplay && move)
             {
                 GameMode->GoBackToActualMove();//Remove history board after the performed move
             }

@@ -229,80 +229,71 @@ void Chess_Move::UpdateCastleVariables()
     if ((isWhite && ReferredBoard->bCastleWhiteLong && From == FVector2D(0, 7)) || (!isWhite && ReferredBoard->bCastleWhiteLong && To == FVector2D(0, 7)))//long castle was feasible and moved the rook/captured the rook
     {
         ReferredBoard->bCastleWhiteLong = false;
-        bSetLongCastleOnUndo = true;
+        bSetWhiteCastleLongOnUndo = true;
     }
     else if ((isWhite && ReferredBoard->bCastleWhiteShort && From == FVector2D(7, 7)) || (!isWhite && ReferredBoard->bCastleWhiteShort && To == FVector2D(7, 7)))//same for king side rook
     {
         ReferredBoard->bCastleWhiteShort = false;
-        bSetShortCastleOnUndo = true;
+        bSetWhiteCastleShortOnUndo = true;
     }
     else
     {
         if (isWhite && ReferredBoard->bCastleWhiteLong && From == FVector2D(4, 7))
         {
             ReferredBoard->bCastleWhiteLong = false;
-            bSetLongCastleOnUndo = true;
+            bSetWhiteCastleLongOnUndo = true;
         }
         if (isWhite && ReferredBoard->bCastleWhiteShort && From == FVector2D(4, 7))
         {
             ReferredBoard->bCastleWhiteShort = false;
-            bSetShortCastleOnUndo = true;
+            bSetWhiteCastleShortOnUndo = true;
         }
     }
     
     if ((!isWhite && ReferredBoard->bCastleBlackLong && From == FVector2D(0, 0)) || (isWhite && ReferredBoard->bCastleBlackLong && To == FVector2D(0, 0)))//long castle was feasible and moved the rook/captured the rook
     {
         ReferredBoard->bCastleBlackLong = false;
-        bSetLongCastleOnUndo = true;
+        bSetBlackCastleLongOnUndo = true;
     }
     else if ((!isWhite && ReferredBoard->bCastleBlackShort && From == FVector2D(7, 0)) || (isWhite && ReferredBoard->bCastleBlackShort && To == FVector2D(7, 0)))//same for king side rook
     {
         ReferredBoard->bCastleBlackShort = false;
-        bSetShortCastleOnUndo = true;
+        bSetBlackCastleShortOnUndo = true;
     }
     else
     {
         if (!isWhite && ReferredBoard->bCastleBlackLong && From == FVector2D(4, 0))
         {
             ReferredBoard->bCastleBlackLong = false;
-            bSetShortCastleOnUndo = true;
+            bSetBlackCastleLongOnUndo = true;
         }
         if (!isWhite && ReferredBoard->bCastleBlackShort && From == FVector2D(4, 0))
         {
             ReferredBoard->bCastleBlackShort = false;
-            bSetLongCastleOnUndo = true;
+            bSetBlackCastleShortOnUndo = true;
         }
     }
 }
 
 void Chess_Move::RollbackCastleVariables()
 {
-    if (bSetLongCastleOnUndo)
+    if (bSetWhiteCastleLongOnUndo)
     {
-        if(GetMoveColor() == ChessColor::WHITE)
-        {
-            ReferredBoard->bCastleWhiteLong = true;
-        }
-        else
-        {
-            ReferredBoard->bCastleBlackLong = true;
-        }
+        ReferredBoard->bCastleWhiteLong = true;
     }
-    if (bSetShortCastleOnUndo)
+    if (bSetBlackCastleLongOnUndo)
     {
-        if (GetMoveColor() == ChessColor::WHITE)
-        {
-            ReferredBoard->bCastleWhiteShort = true;
-        }
-        else
-        {
-            ReferredBoard->bCastleBlackShort = true;
-        }
+        ReferredBoard->bCastleBlackLong = true;
+    }
+    if (bSetWhiteCastleShortOnUndo)
+    {
+        ReferredBoard->bCastleWhiteShort = true;
+    }
+    if (bSetBlackCastleShortOnUndo)
+    {
+        ReferredBoard->bCastleBlackShort = true;
     }
 }
-
-//GetMoveColor() == ChessColor::WHITE ? ReferredBoard->bCastleWhiteShort = true : ReferredBoard->bCastleBlackShort = true;
-//GetMoveColor() == ChessColor::WHITE ? ReferredBoard->bCastleWhiteShort = true : ReferredBoard->bCastleBlackShort = true;
 
 FString Chess_Move::ToString() const
 {

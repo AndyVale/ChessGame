@@ -19,10 +19,7 @@ public:
 	void MakeRandomMove();
 
 	UFUNCTION()//ResetHandler and bMyTurn are workaround, remove it before last commit 
-		void ResetHandler();
-	bool bMyTurn = false;
-
-	ChessColor RandomPColor = BLACK;
+	void ResetHandler();
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

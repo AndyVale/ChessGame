@@ -54,6 +54,8 @@ public:
 	void SetWhiteMoveText(FString t);
 
 	void SetBlackMoveText(FString t);
+
+	void SetAllButtons(bool s);
 private:
 	void ButtonClickHandler(bool isWhiteButton);
 	//void SetGoBackButton();

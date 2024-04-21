@@ -83,14 +83,15 @@ void AChess_GameMode::BeginPlay()
 	if (UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))) {
 		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_GameMode::ResetHandler);
 	}
-
+	
 	ChoosePlayerAndStartGame();
 }
 
 void AChess_GameMode::ChoosePlayerAndStartGame()
 {
+	CurrentPlayer = 0;
 	bIsGameOver = false;
-	Players[0]->Color == ChessColor::WHITE ? Players[0]->OnTurn() : Players[1]->OnTurn();
+	Players[0]->/*PlayerColor == ChessColor::WHITE ? Players[0]->*/OnTurn();// : Players[1]->OnTurn();
 	//Players[0]->OnTurn();
 }
 
@@ -117,7 +118,7 @@ void AChess_GameMode::UpdateLastMove(TSharedPtr<Chess_Move> move)
 
 void AChess_GameMode::ShowPromotionWidget(ChessColor playerColor)
 {
-	if (playerColor == Players[0]->Color) {//if is the human player
+	if (playerColor == Players[0]->PlayerColor) {//if is the human player
 		OnShowPromotionWidget.Execute(playerColor);
 		bMustSelectPiecePromotion = true;
 	}
@@ -232,4 +233,12 @@ void AChess_GameMode::ResetHandler()
 	NextMoveNumber = 1;
 	NextActualMoveNumber = 1;
 	ChoosePlayerAndStartGame();
+}
+
+void AChess_GameMode::PlayerSwapNotify(bool IsHumanPlayer)
+{
+	if (OnTurnSwap.IsBound())
+	{
+		OnTurnSwap.Execute(IsHumanPlayer);
+	}
 }

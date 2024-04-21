@@ -26,8 +26,9 @@ class CHESS_API IChess_PlayerInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	ChessColor Color;
+	ChessColor PlayerColor;
 	UChess_GameInstance* GameInstanceRef;
+	bool bIsMyTurn;//here to avoid "reset-event-problems"
 
 	virtual void OnTurn() {};
 	virtual void OnWin() {};

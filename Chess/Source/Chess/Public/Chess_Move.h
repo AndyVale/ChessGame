@@ -89,7 +89,8 @@ private:
 	void RollbackCastleVariables();
 
 	//bool bCastleVariablesWereModified[4] = {false, false, false, false};//0 -> long white castle, 1 -> short white castle, 2 -> long black castle, 3 -> short black castle
-	bool bSetLongCastleOnUndo = false;//variables used to remember if the castle variables have to be set on undo
-	bool bSetShortCastleOnUndo = false;
-
+	bool bSetWhiteCastleLongOnUndo = false;//variables used to remember if the castle variables have to be set on undo
+	bool bSetWhiteCastleShortOnUndo = false;
+	bool bSetBlackCastleLongOnUndo = false; 
+	bool bSetBlackCastleShortOnUndo = false;
 };

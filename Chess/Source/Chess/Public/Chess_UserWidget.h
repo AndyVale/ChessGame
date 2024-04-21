@@ -37,6 +37,9 @@ public:
 	UButton* RematchButton;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UButton* ChangeOpponentButton;//Event onclick handled in blueprint
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* AIScoreText;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
@@ -87,4 +90,6 @@ private:
 
 	UFUNCTION()
 	void MessageChangeHandler();
+	UFUNCTION()
+	void SetIsEnabledButtons(bool s);
 };

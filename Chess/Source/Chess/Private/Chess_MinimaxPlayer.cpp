@@ -11,13 +11,18 @@ AChess_MinimaxPlayer::AChess_MinimaxPlayer()
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	bIsMyTurn = false;
+	PlayerColor = ChessColor::BLACK;
 }
 
 // Called when the game starts or when spawned
 void AChess_MinimaxPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-
+	if (GameInstanceRef)
+	{
+		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_MinimaxPlayer::ResetHandler);//TODO: this is a workaround, search for a better solution
+	}
 }
 
 // Called every frame
@@ -37,8 +42,11 @@ void AChess_MinimaxPlayer::OnTurn()
 {
 	FTimerHandle TimerHandle;
 	GameInstanceRef->SetTurnMessage(TEXT("Minimax player turn!"));
-
-	//bMyTurn = true;
+	if (AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode()))
+	{
+		GameMode->PlayerSwapNotify(false);
+	}
+	bIsMyTurn = true;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&] { AChess_MinimaxPlayer::MakeMinimaxMove(); }, 1, false);
 }
 
@@ -55,35 +63,33 @@ int32 visitedNode;
 
 void AChess_MinimaxPlayer::MakeMinimaxMove()
 {
-	AChess_GameMode* GM = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode());
+//	if(GetWorld())
+	if (AChess_GameMode* GM = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode())) {
+		auto start = std::chrono::high_resolution_clock::now();
+		TSharedPtr<Chess_Move> miniMaxMove = FindBestMove(GM->Board);
+		auto end = std::chrono::high_resolution_clock::now();
+		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		int32 a = visitedNode;
+		double m = (a * 1.0) / duration;
+		UE_LOG(LogTemp, Error, TEXT("%d,       %lld,"), a, duration, m);
 
-	auto start = std::chrono::high_resolution_clock::now();
-	TSharedPtr<Chess_Move> miniMaxMove = FindBestMove(GM->Board);
-	auto end = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-	int32 a = visitedNode;
-	double m = (a*1.0) / duration;
-	UE_LOG(LogTemp, Error, TEXT("%d,       %lld,"), a, duration, m);
-
-	if (miniMaxMove)
-	{
-		GM->Board->HandledMakeAMove(miniMaxMove, false);
-		if (miniMaxMove->MoveClass == MoveType::PAWN_PROMOTION) {
-			TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
-			int32 randomPromotionIndx = 3;//FMath::Rand() % randomPromotedPiece.Num();
-			GM->Board->PromoteLastMove(randomPromotedPiece[randomPromotionIndx]);
+		if (miniMaxMove && bIsMyTurn)
+		{
+			GM->Board->HandledMakeAMove(miniMaxMove, false);
+			if (miniMaxMove->MoveClass == MoveType::PAWN_PROMOTION) {
+				TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
+				int32 randomPromotionIndx = 3;//FMath::Rand() % randomPromotedPiece.Num();
+				GM->Board->PromoteLastMove(randomPromotedPiece[randomPromotionIndx]);
+			}
+			GM->UpdateLastMove(miniMaxMove);//notify the HUD of the move
+			bIsMyTurn = false;
+			GM->TurnNextPlayer();
+		}
+		else
+		{
+			//reset occurred
 		}
 	}
-	else
-	{
-		
-	}
-
-
-	if (miniMaxMove) {
-		GM->UpdateLastMove(miniMaxMove);//notify the HUD of the move
-	}
-	GM->TurnNextPlayer();
 }
 TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 {
@@ -94,7 +100,7 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 	TArray<AChessPiece*>  piecesMap;
 	TArray<Chess_Move> moves = TArray<Chess_Move>();
 	visitedNode = 0;
-	if (Color == ChessColor::BLACK)//play as Minimizer
+	if (PlayerColor == ChessColor::BLACK)//play as Minimizer
 	{
 		bestScore = +20000.0f;
 		piecesMap = board->GetPieces(BLACK);
@@ -174,7 +180,7 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 
 float AChess_MinimaxPlayer::EvaluatePieces(AChessboard* board, bool isMax)
 {
-	if (Color == ChessColor::NAC) {
+	if (PlayerColor == ChessColor::NAC) {
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("EvaluatePieces::Color is not a color"));
 	}
 	if (isMax)
@@ -335,6 +341,13 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 
 		return value;
 	}
+}
+
+void AChess_MinimaxPlayer::ResetHandler()
+{
+	bIsMyTurn = PlayerColor == ChessColor::WHITE;
+	bIsMyTurn = bIsMyTurn;
+
 }
 
 

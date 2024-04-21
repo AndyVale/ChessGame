@@ -24,6 +24,7 @@ void UChess_UserWidget::NativeConstruct()
             GameInstanceRef->OnMessageChange.AddDynamic(this, &UChess_UserWidget::MessageChangeHandler);
             GameMode->OnShowPromotionWidget.BindUObject(this, &UChess_UserWidget::SetPromotionWidgetVisible);
             GameMode->OnTurnGoBack.AddUObject(this, &UChess_UserWidget::RemoveMovesUntil);
+            GameMode->OnTurnSwap.BindUObject(this, &UChess_UserWidget::SetIsEnabledButtons);
         }
     }
 
@@ -46,6 +47,8 @@ void UChess_UserWidget::NativeConstruct()
     if (PawnPromotionWidget) {
         PawnPromotionWidget->SetVisibility(ESlateVisibility::Hidden);
     }
+
+    ScoreUpdateHandler();//Show points
 }
 
 void UChess_UserWidget::ReplayMove(int32 moveNumber)
@@ -184,4 +187,13 @@ void UChess_UserWidget::MessageChangeHandler()
     //        CurrentPlayerText->SetText(FText::FromString("White turn"));
     //    }
     //}
+}
+
+void UChess_UserWidget::SetIsEnabledButtons(bool s)
+{
+    ChangeOpponentButton->SetIsEnabled(s);
+    for (UChess_StoryBoardEntry* entry : TurnsHistory)
+    {
+        entry->SetAllButtons(s);
+    }
 }

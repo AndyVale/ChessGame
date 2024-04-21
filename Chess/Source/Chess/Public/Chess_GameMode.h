@@ -10,9 +10,11 @@
 #include "Chess_PlayerInterface.h"
 #include "Chess_GameMode.generated.h"
 
-DECLARE_DELEGATE_OneParam(FOnShowPromotionWidget, ChessColor);
-DECLARE_DELEGATE_TwoParams(FOnMoveUpdate, const FString, int32);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnTurnGoBack, int32);
+DECLARE_DELEGATE_OneParam(FOnShowPromotionWidget, ChessColor);//delegate used to notify Chess_UserWidget to show pawnpromotion HUD
+DECLARE_DELEGATE_OneParam(FOnTurnSwap, bool);//Used to notify Chess_UserWidget to make it clickable (true) or not (false) the changeOpponentButton
+DECLARE_DELEGATE_TwoParams(FOnMoveUpdate, const FString, int32);//notify Chess_UserWidget to update storyboard at the specified move number with the specified string
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnTurnGoBack, int32);//notify Chess_UserWidget to update storyboard removign moves until number specified
+
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnReplayMove, int32, MoveNumber);
 
@@ -37,6 +39,7 @@ public:
 	FOnReplayMove OnReplayMove;
 
 	FOnShowPromotionWidget OnShowPromotionWidget;
+	FOnTurnSwap OnTurnSwap;
 	FOnMoveUpdate OnMoveUpdate;//TODO: Add binding and put in gamemode(?)
 	FOnTurnGoBack OnTurnGoBack;
 
@@ -48,6 +51,8 @@ public:
 
 	//Broadcast HUD and chessboard to rollback chessboard state and HUD to the specified turn
 	void GoBackToActualMove();
+
+	void PlayerSwapNotify(bool IsHumanPlayer);
 
 	void SelectedPawnPromotionHandler(CP ChessPieceEnum);
 

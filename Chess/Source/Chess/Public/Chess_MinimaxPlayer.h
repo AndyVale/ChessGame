@@ -24,7 +24,6 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	ChessColor Color = ChessColor::BLACK;
 	UChess_GameInstance* GameInstanceRef;
 
 	// Called every frame
@@ -41,4 +40,6 @@ private:
 	float EvaluatePieces(AChessboard* board, bool isMax);
 	//int32 Minimax(AChessboard* board, int32 depth, bool isMax);
 	float AlfaBetaMinimax(float alfa, float beta, AChessboard* board, int32 depth, bool isMax);
+	UFUNCTION()
+	void ResetHandler();
 };
