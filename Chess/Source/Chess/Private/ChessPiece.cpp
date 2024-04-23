@@ -46,7 +46,7 @@ void AChessPiece::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
-void AChessPiece::GetFeasibleDiagonals(AChessPiece* piece, TArray<Chess_Move>& moves)
+void AChessPiece::GetFeasibleDiagonals(AChessPiece* piece, TArray<TSharedPtr<Chess_Move>>& moves)
 {
     AChessboard* Board = piece->ReferredBoard;
     int max = Board->BoardSize;
@@ -75,14 +75,14 @@ void AChessPiece::GetFeasibleDiagonals(AChessPiece* piece, TArray<Chess_Move>& m
                     break;
                 }
             }
-            moves.Add(Chess_Move(piece->PiecePosition, FVector2D(i, j), piece->ReferredBoard));
+            moves.Add(MakeShareable<Chess_Move>(new Chess_Move(piece->PiecePosition, FVector2D(i, j), piece->ReferredBoard)));
             i += move.X;
             j += move.Y;
         }
     }
 }
 
-void AChessPiece::GetFeasibleCross(AChessPiece* piece, TArray <Chess_Move> & moves)
+void AChessPiece::GetFeasibleCross(AChessPiece* piece, TArray <TSharedPtr<Chess_Move>> & moves)
 {
     AChessboard* Board = piece->ReferredBoard;
     int max = Board->BoardSize;
@@ -112,7 +112,7 @@ void AChessPiece::GetFeasibleCross(AChessPiece* piece, TArray <Chess_Move> & mov
                     break;
                 }
             }
-            moves.Add(Chess_Move(piece->PiecePosition, FVector2D(i, j), piece->ReferredBoard));
+            moves.Add(MakeShareable<Chess_Move>(new Chess_Move(piece->PiecePosition, FVector2D(i, j), piece->ReferredBoard)));
             i += move.X;
             j += move.Y;
         }
@@ -127,14 +127,14 @@ float AChessPiece::GetCorrectedPieceValue()
     return pv + pov;
 }
 
-TArray<Chess_Move> AChessPiece::GetPieceLegalMoves()
+TArray<TSharedPtr<Chess_Move>> AChessPiece::GetPieceLegalMoves()
 {
-    TArray<Chess_Move> feasibleMoves = this->GetPieceMoves();
-    TArray<Chess_Move> legalMoves = TArray<Chess_Move>();
+    TArray<TSharedPtr<Chess_Move>> feasibleMoves = this->GetPieceMoves();
+    TArray<TSharedPtr<Chess_Move>> legalMoves = TArray<TSharedPtr<Chess_Move>>();
 
-    for (Chess_Move& move : feasibleMoves)
+    for (TSharedPtr<Chess_Move> move : feasibleMoves)
     {
-        if (move.IsLegal())
+        if (move->IsLegal())
         {
             legalMoves.Add(move);
         }

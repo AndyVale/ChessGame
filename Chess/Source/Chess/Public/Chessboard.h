@@ -6,6 +6,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Chess_Move.h"
+#include "Chess_MoveCastle.h"
+#include "Chess_MovePawnPromotion.h"
+#include "Chess_MoveEnPassant.h"
 #include "Chessboard.generated.h"
 
 UENUM()
@@ -89,7 +92,7 @@ public:
 
 	void HandledRollbackAMove(TSharedPtr<Chess_Move> move, bool simulate);
 
-	TArray<Chess_Move> GetMovesAndShowHints(AChessPiece* Piece, bool Show);
+	TArray<TSharedPtr<Chess_Move>> GetMovesAndShowHints(AChessPiece* Piece, bool Show);
 
 	void CancelFeasibleSquares();
 

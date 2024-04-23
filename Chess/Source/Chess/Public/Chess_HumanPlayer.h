@@ -22,28 +22,34 @@ public:
 	UCameraComponent* Camera;
 
 	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void Tick(float DeltaTime) override;//TODO:maybe useless
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	//Overrides from IChess_PlayerInterface
 	virtual void OnTurn() override;
 	virtual void OnWin() override;
 	virtual void OnLose() override;
 
 	UFUNCTION()
+	//Method to handle the click event
 	void OnClick();
 
 	UPROPERTY(Transient)
+	//Reference to the selected piece if any
 	AChessPiece* SelectedPiece;
 
-	//UScacchiGameInstance* GameInstance
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	//Color of the player (work in progress)
 	ChessColor MyColor = WHITE;
 private:
 	UFUNCTION()
+	//Method to handle the reset event
 	void ReplayHandler(int32 moveNumber);
 
-	TArray<Chess_Move> ActiveMoves;//caching selected piece's moves
+	//List of active moves for the selected piece, used remember the possible moves of the selected piece
+	TArray<TSharedPtr<Chess_Move>> ActiveMoves;
 };

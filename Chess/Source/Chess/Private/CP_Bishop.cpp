@@ -3,9 +3,9 @@
 
 #include "CP_Bishop.h"
 
-TArray<Chess_Move> ACP_Bishop::GetPieceMoves()
+TArray<TSharedPtr<Chess_Move>> ACP_Bishop::GetPieceMoves()
 {
-    TArray<Chess_Move> moves = TArray<Chess_Move>();
+    TArray<TSharedPtr<Chess_Move>> moves = TArray<TSharedPtr<Chess_Move>>();
     GetFeasibleDiagonals(this, moves);
     return moves;
 }

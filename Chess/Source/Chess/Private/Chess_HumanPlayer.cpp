@@ -130,11 +130,11 @@ void AChess_HumanPlayer::OnClick()
                 return;
             }
 
-            for (Chess_Move& tmpMove : ActiveMoves)
+            for (TSharedPtr<Chess_Move> tmpMove : ActiveMoves)
             {
-                if (tmpMove.From == oldLoc && tmpMove.To == newLoc)
+                if (tmpMove->From == oldLoc && tmpMove->To == newLoc)
                 {
-                    move = MakeShareable<Chess_Move>(new Chess_Move(tmpMove));
+                    move = tmpMove;
                     break;
                 }
             }

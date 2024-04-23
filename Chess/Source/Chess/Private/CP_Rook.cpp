@@ -4,9 +4,9 @@
 #include "CP_Rook.h"
 
 
-TArray<Chess_Move> ACP_Rook::GetPieceMoves()//TODO:Creare un metodo di ChessPiece che faccia sta roba in modo da usarlo nella regina
+TArray<TSharedPtr<Chess_Move>> ACP_Rook::GetPieceMoves()//TODO:Creare un metodo di ChessPiece che faccia sta roba in modo da usarlo nella regina
 {
-    TArray<Chess_Move> moves = TArray<Chess_Move>();
+    TArray<TSharedPtr<Chess_Move>> moves = TArray<TSharedPtr<Chess_Move>>();
     GetFeasibleCross(this, moves);
     return moves;
 }

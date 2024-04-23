@@ -25,56 +25,52 @@ class CHESS_API UChess_GameInstance : public UGameInstance
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//Game difficulty, -1 for no difficulty selected, 0 for random, 1 for minimax. Setted in the main menu
 	int32 GameDifficulty = -1;
 	
 	UPROPERTY(BlueprintAssignable)
+	//delegate for reset event used by ResetPointsAndGame, it's used to reset the points and the game without changing the difficulty
 	FOnReset OnResetEvent;
 
 	UPROPERTY(BlueprintAssignable)
+	//delegate for score update event used by IncrementScoreHumanPlayer and IncrementScoreAIPlayer, it's used to update the score
 	FOnScoreUpdate OnScoreUpdate;
 
 	UPROPERTY(BlueprintAssignable)
+	//delegate for rematch event used by ResetGame, it's used to reset the game without changing the difficulty
 	FOnRematch OnRematch;
 
 	UPROPERTY(BlueprintAssignable)
+	//delegate for message change event used by SetTurnMessage, it's used to update the message in the HUD
 	FOnMessageChange OnMessageChange;
 
-	//UPROPERTY(EditAnywhere)
-	int32 ScoreHumanPlayer = 0;
-
-	// score value for AI player
-	//UPROPERTY(EditAnywhere)
-	int32 ScoreAIPlayer = 0;
-
-	// message to show every turn
-	//UPROPERTY(EditAnywhere)
-	FString CurrentTurnMessage;
-
-	// increment the score for human player and broadcast to update points
-	void IncrementScoreHumanPlayer();
-
-	// increment the score for AI player and broadcast to update points
-	void IncrementScoreAIPlayer();
-
-	// get the score for human player
-	int32 GetScoreHumanPlayer();
-
-	// get the score for AI player
-	int32 GetScoreAIPlayer();
-
-	// get the current turn message
-	//UFUNCTION(BlueprintCallable)
-	FString GetTurnMessage();
-
-	// set the turn message
 	UFUNCTION(BlueprintCallable)
+	//Set the turn message and broadcast to update the HUD
 	void SetTurnMessage(FString Message);
 
-	UFUNCTION(BlueprintCallable)//start a new game resetting points
+	UFUNCTION(BlueprintCallable)
+	//Start a new game resetting points
 	void ResetPointsAndGame();
 
-	UFUNCTION(BlueprintCallable)//start a new game without resetting points
+	UFUNCTION(BlueprintCallable)
+	//Start a new game without resetting points
 	void ResetGame();
+
+	//Increment the score for human player and broadcast to update points
+	void IncrementScoreHumanPlayer();
+
+	//Increment the score for AI player and broadcast to update points
+	void IncrementScoreAIPlayer();
+
+	//Get the score of human player
+	int32 GetScoreHumanPlayer();
+
+	//Get the score of AI player
+	int32 GetScoreAIPlayer();
+
+	//Get the current turn message
+	FString GetTurnMessage();
+	
 private:
 	// score value for human players
 	//UFUNCTION(BlueprintCallable)
@@ -82,4 +78,11 @@ private:
 
 	UFUNCTION(BlueprintCallable)
 	void UpdateScoreSignal();
+
+	//Message for the HUD: it's updated by the function SetTurnMessage
+	FString CurrentTurnMessage;
+
+	//Points for the human player and the AI player: they are updated by the functions IncrementScoreHumanPlayer and IncrementScoreAIPlayer and ResetPointsAndGame
+	int32 ScoreHumanPlayer = 0;
+	int32 ScoreAIPlayer = 0;
 };

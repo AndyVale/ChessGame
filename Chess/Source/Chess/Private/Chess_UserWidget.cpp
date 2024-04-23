@@ -102,6 +102,7 @@ void UChess_UserWidget::ResetOnClick()
 {
     if (GameInstanceRef)
     {
+        PawnPromotionWidget->SetVisibility(ESlateVisibility::Hidden);
         GameInstanceRef->ResetPointsAndGame();
     }
 }
@@ -110,6 +111,7 @@ void UChess_UserWidget::RematchOnClick()
 {
     if (GameInstanceRef)
     {
+        PawnPromotionWidget->SetVisibility(ESlateVisibility::Hidden);
         GameInstanceRef->ResetGame();
     }
 }
@@ -135,8 +137,12 @@ void UChess_UserWidget::ResetHandler() {
    // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Reset HUD"));
     if (StoryBoardScrollBox)
     {
-        TurnsHistory = TArray<UChess_StoryBoardEntry*>();
-        StoryBoardScrollBox->ClearChildren();
+        //TurnsHistory = TArray<UChess_StoryBoardEntry*>();
+        while(StoryBoardScrollBox->GetChildrenCount() - 1 >= 0)//remove all entries (clearchildren not working)	
+        {
+            TurnsHistory.Pop();
+            StoryBoardScrollBox->RemoveChildAt((StoryBoardScrollBox->GetChildrenCount() - 1));
+        }
     }
 }
 
@@ -174,19 +180,8 @@ void UChess_UserWidget::MessageChangeHandler()
 {
     if (GameInstanceRef && CurrentPlayerText)
     {
-        CurrentPlayerText->SetText(FText::FromString(GameInstanceRef->CurrentTurnMessage));
+        CurrentPlayerText->SetText(FText::FromString(GameInstanceRef->GetTurnMessage()));
     }
-    //if (CurrentPlayerText)
-    //{
-    //    if (CurrentPlayerText->GetText().ToString().Compare("White turn") == 0)
-    //    {
-    //        CurrentPlayerText->SetText(FText::FromString("Black turn"));
-    //    }
-    //    else
-    //    {
-    //        CurrentPlayerText->SetText(FText::FromString("White turn"));
-    //    }
-    //}
 }
 
 void UChess_UserWidget::SetIsEnabledButtons(bool s)

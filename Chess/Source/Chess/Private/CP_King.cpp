@@ -3,9 +3,9 @@
 
 #include "CP_King.h"
 
-TArray<Chess_Move> ACP_King::GetPieceMoves()
+TArray<TSharedPtr<Chess_Move>> ACP_King::GetPieceMoves()
 {
-    TArray<Chess_Move> moves = TArray<Chess_Move>();
+    TArray<TSharedPtr<Chess_Move>> moves = TArray<TSharedPtr<Chess_Move>>();
 
     int x = PiecePosition[0], y = PiecePosition[1];
     int max = ReferredBoard->BoardSize;
@@ -26,7 +26,7 @@ TArray<Chess_Move> ACP_King::GetPieceMoves()
     for (const FVector2D& move : kingMoves) {
         FVector2D newLoc = FVector2D(x + move.X, y + move.Y);
         if (newLoc.X >= 0 && newLoc.X < max && newLoc.Y >= 0 && newLoc.Y < max && ReferredBoard->GetPieceColorFromXY(newLoc) != PieceColor) {
-            moves.Add(Chess_Move(PiecePosition, newLoc, ReferredBoard));
+            moves.Add(MakeShareable<Chess_Move>(new Chess_Move(PiecePosition, newLoc, ReferredBoard)));
         }
     }
     
@@ -50,7 +50,7 @@ TArray<Chess_Move> ACP_King::GetPieceMoves()
             }
             if (j == 0)
             {
-                moves.Add(Chess_Move(PiecePosition, FVector2D(2, PiecePosition.Y), ReferredBoard, true));
+                moves.Add(MakeShareable<Chess_Move>(new Chess_MoveCastle(PiecePosition, FVector2D(2, PiecePosition.Y), ReferredBoard, true)));
             }
         }
         
@@ -65,7 +65,7 @@ TArray<Chess_Move> ACP_King::GetPieceMoves()
             }
             if (j == 7)
             {
-                moves.Add(Chess_Move(PiecePosition, FVector2D(6, PiecePosition.Y), ReferredBoard, false));
+                moves.Add(MakeShareable<Chess_Move>(new Chess_MoveCastle(PiecePosition, FVector2D(6, PiecePosition.Y), ReferredBoard, false)));
             }
         }
     }

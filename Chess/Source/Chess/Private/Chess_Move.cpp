@@ -23,16 +23,16 @@ Chess_Move::Chess_Move(FVector2D f, FVector2D t, AChessboard* board) :
     MoveClass = STANDARD;
     //PieceLetter = GetPieceLetter(PieceFrom);
     //if the piece get the opposite end of the board
-    if (GetMoveColor() == ChessColor::BLACK && To.Y == ReferredBoard->BoardSize - 1 || GetMoveColor() == ChessColor::WHITE && To.Y == 0)
-    {
-        if (ACP_Pawn* pawn = Cast<ACP_Pawn>(CapturingPiece))//and is a pawn->needs a promotion
-        {
-            MoveClass = MoveType::PAWN_PROMOTION;
-        }
-    }
+    //if (GetMoveColor() == ChessColor::BLACK && To.Y == ReferredBoard->BoardSize - 1 || GetMoveColor() == ChessColor::WHITE && To.Y == 0)
+    //{
+    //    if (ACP_Pawn* pawn = Cast<ACP_Pawn>(CapturingPiece))//and is a pawn->needs a promotion
+    //    {
+    //        MoveClass = MoveType::PAWN_PROMOTION;
+    //    }
+    //}
     MoveValue = MoveValueCalculation();
 }
-
+/*
 Chess_Move::Chess_Move(FVector2D f, FVector2D t, AChessboard* board, FVector2D enPassantCapturePosition) : 
     PlayerOnCheck(ChessColor::NAC), PlayerOnCheckMate(ChessColor::NAC), PlayerOnStall(ChessColor::NAC), From(f), To(t), ReferredBoard(board)
 {
@@ -61,13 +61,13 @@ Chess_Move::Chess_Move(FVector2D f, FVector2D t, AChessboard* board, bool isQuee
     MoveValue = MoveValueCalculation();
     bIsQueenSide = isQueenSide;
 }
-
+*/
 
 
 void Chess_Move::CalculateResult()
 {
     ChessColor OpponentColor = CapturingPiece->PieceColor == WHITE ? BLACK : WHITE;
-
+    PlayerOnCheck = PlayerOnCheckMate = PlayerOnStall = ChessColor::NAC;
     if (ReferredBoard->CheckControl(OpponentColor))
     {
         PlayerOnCheck = OpponentColor;
@@ -117,20 +117,20 @@ void Chess_Move::MakeMove(bool simulate)
     }
 
     //CalculateResult test for check, checkmate and stall. Is importat to avoid this procedure in case it's a simulative move (for performance reasons)
-    if (MoveClass == MoveType::PAWN_PROMOTION)
-    {
-        PromotePawn(simulate, nullptr);
-    }
+    //if (MoveClass == MoveType::PAWN_PROMOTION)
+    //{
+    //    PromotePawn(simulate, nullptr);
+    //}
 
-    if (MoveClass == MoveType::EN_PASSANT)
-    {
-        EnPassantCapture(simulate);
-    }
+    //if (MoveClass == MoveType::EN_PASSANT)
+    //{
+    //    EnPassantCapture(simulate);
+    //}
 
-    if (MoveClass == MoveType::CASTLE)
-    {
-        CastleMove(simulate); //TODO //IL MINIMAX NON FUNZIONA CON L'ARROCO, alcune CastledRook risultano null (inconsistenza tra arrocchi possibili ed effettivamente fattibili)
-    }
+    //if (MoveClass == MoveType::CASTLE)
+   // {
+    //    CastleMove(simulate); //TODO //IL MINIMAX NON FUNZIONA CON L'ARROCO, alcune CastledRook risultano null (inconsistenza tra arrocchi possibili ed effettivamente fattibili)
+   // }
 
     if (!simulate)
     {
@@ -143,20 +143,20 @@ void Chess_Move::MakeMove(bool simulate)
 
 void Chess_Move::RollbackMove(bool simulate)
 {
-    if (MoveClass == MoveType::CASTLE)
-    {
-        CastleMoveRollback(simulate);
-    }
+    //if (MoveClass == MoveType::CASTLE)
+    //{
+    //    CastleMoveRollback(simulate);
+    //}
 
-    if (MoveClass == MoveType::EN_PASSANT)
-    {
-        EnPassantCaptureRollback(simulate);
-    }
+    //if (MoveClass == MoveType::EN_PASSANT)
+    //{
+    //    EnPassantCaptureRollback(simulate);
+    //}
 
-    if (MoveClass == MoveType::PAWN_PROMOTION && PawnPromotionAusRef)//if move was a promotion and was already done
-    {
-        PromotePawnRollback(simulate);
-    }
+    //if (MoveClass == MoveType::PAWN_PROMOTION && PawnPromotionAusRef)//if move was a promotion and was already done
+    //{
+    //    PromotePawnRollback(simulate);
+    //}
 
     //ReferredBoard->RemovePiece(CapturedPiece);
     ReferredBoard->RemovePiece(CapturingPiece);
@@ -297,43 +297,36 @@ void Chess_Move::RollbackCastleVariables()
 
 FString Chess_Move::ToString() const
 {
-    FString AlgebraicNotation;
+    FString AlgebricNotation;
     FString Columns = "abcdefgh";
     FString Rows = "87654321";
-    // Converti le coordinate 'From' e 'To' in notazione algebrica
-    AlgebraicNotation += PawnPromotionAusRef == nullptr ? GetPieceLetter(CapturingPiece) : GetPieceLetter(PawnPromotionAusRef);
-    AlgebraicNotation += Columns[From.X];
-    AlgebraicNotation += Rows[From.Y];
+
+    AlgebricNotation += GetPieceLetter(CapturingPiece);
+    AlgebricNotation += Columns[From.X];
+    AlgebricNotation += Rows[From.Y];
     if (CapturedPiece != nullptr)//eat
     {
-        AlgebraicNotation += 'x';
+        AlgebricNotation += 'x';
     }
     else {
-        AlgebraicNotation += '-';
+        AlgebricNotation += '-';
     }
-    AlgebraicNotation += Columns[To.X];
-    AlgebraicNotation += Rows[To.Y];
-
-    AlgebraicNotation += PawnPromotionAusRef != nullptr ? "=" + GetPieceLetter(CapturingPiece) : "";//for pawn promotion TODO: controlla se è giusta la notazione
+    AlgebricNotation += Columns[To.X];
+    AlgebricNotation += Rows[To.Y];
 
     if (PlayerOnCheck != NAC)
     {
         if (PlayerOnCheckMate == NAC)//it's only a check
         {
-            AlgebraicNotation += '+';
+            AlgebricNotation += '+';
         }
         else//it's checkmate
         {
-            AlgebraicNotation += '#';
+            AlgebricNotation += '#';
         }
     }
 
-    if (MoveClass == MoveType::CASTLE)
-    {
-        AlgebraicNotation = bIsQueenSide ? "0-0-0" : "0-0";
-    }
-
-    return AlgebraicNotation;
+    return AlgebricNotation;
 }
 
 ChessColor Chess_Move::GetMoveColor() const
@@ -343,10 +336,6 @@ ChessColor Chess_Move::GetMoveColor() const
         return CapturingPiece->PieceColor;
     }
     return ChessColor::NAC;
-}
-
-Chess_Move::~Chess_Move()
-{
 }
 
 FString Chess_Move::GetPieceLetter(AChessPiece* piece)
@@ -372,6 +361,7 @@ FString Chess_Move::GetPieceLetter(AChessPiece* piece)
     return FString("");
 }
 
+/*
 //--------------------- PawnPromotion methods
 
 void Chess_Move::PromotePawnRollback(bool simulate)
@@ -519,3 +509,4 @@ void Chess_Move::CastleMoveRollback(bool simulate)
         CastledRook->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(oldRookPosition.X, oldRookPosition.Y));
     }
 }
+*/

@@ -5,9 +5,9 @@
 
 
 
-TArray<Chess_Move> ACP_Knight::GetPieceMoves()
+TArray<TSharedPtr<Chess_Move>> ACP_Knight::GetPieceMoves()
 {//TODO:Aggiungere impossibilità di automangiarsi
-    TArray<Chess_Move> moves = TArray<Chess_Move>();
+    TArray<TSharedPtr<Chess_Move>> moves = TArray<TSharedPtr<Chess_Move>>();
 
     int x = PiecePosition[0], y = PiecePosition[1];
     int max = ReferredBoard->BoardSize;
@@ -26,7 +26,7 @@ TArray<Chess_Move> ACP_Knight::GetPieceMoves()
     for (const FVector2D& move : knightMoves) {
         FVector2D newLoc = FVector2D(x + move.X, y + move.Y);
         if (newLoc.X >= 0 && newLoc.X < max && newLoc.Y >= 0 && newLoc.Y < max && ReferredBoard->GetPieceColorFromXY(newLoc) != PieceColor) {
-            moves.Add(Chess_Move(PiecePosition, newLoc, ReferredBoard));
+            moves.Add(MakeShareable<Chess_Move>(new Chess_Move(PiecePosition, newLoc, ReferredBoard)));
         }
     }
     return moves;

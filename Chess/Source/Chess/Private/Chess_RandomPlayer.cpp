@@ -63,7 +63,7 @@ void AChess_RandomPlayer::MakeRandomMove() {
 		}
 
 		int32 piecesNumber = actualIsVisited.Num();
-		TArray<Chess_Move> possibleMoves;
+		TArray<TSharedPtr<Chess_Move>> possibleMoves;
 		int numSize = 0;
 		int32 randomPieceIndx = 0;
 
@@ -80,7 +80,7 @@ void AChess_RandomPlayer::MakeRandomMove() {
 			if (numSize != 0)
 			{
 				int32 randomMoveIndx = FMath::Rand() % numSize;
-				randomMovePtr = MakeShareable(new Chess_Move(possibleMoves[randomMoveIndx]));
+				randomMovePtr = possibleMoves[randomMoveIndx];
 				Board->HandledMakeAMove(randomMovePtr, false);
 				//Chess_Move succMove = Chess_Move(oldLoc, newLoc);
 			}
@@ -88,11 +88,11 @@ void AChess_RandomPlayer::MakeRandomMove() {
 			{
 				//STALLO
 			}
-			if (randomMovePtr && randomMovePtr->MoveClass == MoveType::PAWN_PROMOTION) {
-				TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
-				int32 randomPromotionIndx = FMath::Rand() % randomPromotedPiece.Num();
-				Board->PromoteLastMove(randomPromotedPiece[randomPromotionIndx]);
-			}
+			//f (randomMovePtr && randomMovePtr->MoveClass == MoveType::PAWN_PROMOTION) {
+			//	TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
+			//	int32 randomPromotionIndx = FMath::Rand() % randomPromotedPiece.Num();
+			//	//Board->PromoteLastMove(randomPromotedPiece[randomPromotionIndx]);
+			//
 			if (randomMovePtr) {
 				GameMode->UpdateLastMove(randomMovePtr);//notify the HUD of the move
 			}

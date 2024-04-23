@@ -24,22 +24,30 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	UChess_GameInstance* GameInstanceRef;
-
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	//Overrides from IChess_PlayerInterface
 	virtual void OnTurn() override;
 	virtual void OnWin() override;
 	virtual void OnLose() override;
+
+	//Wrapper function to call the minimax algorithm
 	void MakeMinimaxMove();
 private:
+	//Minimax algorithm functions:
 	TSharedPtr<Chess_Move> FindBestMove(AChessboard* board);
 	float EvaluatePieces(AChessboard* board, bool isMax);
-	//int32 Minimax(AChessboard* board, int32 depth, bool isMax);
+	//alphabeta minimax algorithm, must be initialized with -MAX_FLOAT and +MAX_FLOAT in alfa and beta respectively, depth is the depth of the tree to be explored, isMax = True if the player is WHITE, False if the player is the BLACK
 	float AlfaBetaMinimax(float alfa, float beta, AChessboard* board, int32 depth, bool isMax);
+
 	UFUNCTION()
+	//Reset handler binded to the reset event
 	void ResetHandler();
+
+	//reference to the game instance to avoid casting every time (used to bind events and select the depth of minimax (work in progress))
+	UChess_GameInstance* GameInstanceRef;
 };

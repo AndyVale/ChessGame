@@ -76,11 +76,6 @@ void AChess_MinimaxPlayer::MakeMinimaxMove()
 		if (miniMaxMove && bIsMyTurn)
 		{
 			GM->Board->HandledMakeAMove(miniMaxMove, false);
-			if (miniMaxMove->MoveClass == MoveType::PAWN_PROMOTION) {
-				TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
-				int32 randomPromotionIndx = 3;//FMath::Rand() % randomPromotedPiece.Num();
-				GM->Board->PromoteLastMove(randomPromotedPiece[randomPromotionIndx]);
-			}
 			GM->UpdateLastMove(miniMaxMove);//notify the HUD of the move
 			bIsMyTurn = false;
 			GM->TurnNextPlayer();
@@ -95,10 +90,10 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 {
 	float bestScore;
 	float actualScore;
-	TArray< TSharedPtr<Chess_Move>> bestMoves = TArray< TSharedPtr<Chess_Move>>();
+	TArray<TSharedPtr<Chess_Move>> bestMoves = TArray< TSharedPtr<Chess_Move>>();
 	TSharedPtr<Chess_Move> lastBestMove = nullptr;
 	TArray<AChessPiece*>  piecesMap;
-	TArray<Chess_Move> moves = TArray<Chess_Move>();
+	TArray<TSharedPtr<Chess_Move>> moves = TArray<TSharedPtr<Chess_Move>>();
 	visitedNode = 0;
 	if (PlayerColor == ChessColor::BLACK)//play as Minimizer
 	{
@@ -109,20 +104,17 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 			moves.Append(piece->GetPieceLegalMoves());
 		}
 
-		moves.Sort([](const Chess_Move& a, const  Chess_Move& b) {//order in descending order -> best move (at depth 0) for black first
-			return a.MoveValue < b.MoveValue;
+		moves.Sort([](const TSharedPtr<Chess_Move>& a, const  TSharedPtr<Chess_Move>& b) {//order in descending order -> best move (at depth 0) for black first
+			return a->MoveValue < b->MoveValue;
 			});
 
-		for (Chess_Move& move : moves)
+		for (TSharedPtr<Chess_Move> move : moves)
 		{
 			visitedNode++;
-			move.MakeMove(true);
-			if (move.MoveClass == MoveType::PAWN_PROMOTION)
-			{
-				move.PromotePawn(true, board->Queen);
-			}
+			board->HandledMakeAMove(move, true);
 			actualScore = AlfaBetaMinimax(-20000.0f, 20000.0f, board, 3, true);
-			move.RollbackMove(true);
+			board->HandledRollbackAMove(move, true);
+			//move->RollbackMove(true);
 			if (actualScore < bestScore)
 			{
 				bestMoves.Empty();
@@ -131,7 +123,7 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 			}
 			if (actualScore == bestScore)
 			{
-				lastBestMove = MakeShareable<Chess_Move>(new Chess_Move(move));
+				lastBestMove = move;
 				bestMoves.Add(lastBestMove);
 			}
 		}
@@ -153,22 +145,20 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 			moves.Append(piece->GetPieceLegalMoves());
 		}
 
-		moves.Sort([](const Chess_Move& a, const  Chess_Move& b) {//order in ascending order -> best move (at depth 0) for white first
-			return a.MoveValue > b.MoveValue;
+		moves.Sort([](const TSharedPtr<Chess_Move>& a, const  TSharedPtr<Chess_Move>& b) {//order in ascending order -> best move (at depth 0) for white first
+			return a->MoveValue > b->MoveValue;
 			});
 
-		for (Chess_Move& move : moves)
+		for (TSharedPtr<Chess_Move> move : moves)
 		{
-			move.MakeMove(true);
-			if (move.MoveClass == MoveType::PAWN_PROMOTION)
-			{
-				move.PromotePawn(true, board->Queen);
-			}
+			board->HandledMakeAMove(move, true);
+			//move->MakeMove(true);
 			actualScore = AlfaBetaMinimax(-20000.0f, 20000.0f, board, 2, false);
-			move.RollbackMove(true);
+			board->HandledRollbackAMove(move, true);
+			//move->RollbackMove(true);
 			if (actualScore >= bestScore)
 			{
-				lastBestMove = MakeShareable<Chess_Move>(new Chess_Move(move));//new Chess_Move(move);
+				lastBestMove = move;//new Chess_Move(move);
 				bestScore = actualScore;
 			}
 		}
@@ -183,7 +173,7 @@ float AChess_MinimaxPlayer::EvaluatePieces(AChessboard* board, bool isMax)
 	if (PlayerColor == ChessColor::NAC) {
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("EvaluatePieces::Color is not a color"));
 	}
-	if (isMax)
+	//if (isMax)
 	{
 		if (board->CheckControl(ChessColor::WHITE))//Minimizer Wins
 		{
@@ -193,7 +183,7 @@ float AChess_MinimaxPlayer::EvaluatePieces(AChessboard* board, bool isMax)
 			}
 		}
 	}
-	else
+	//else
 	{
 		if (board->CheckControl(ChessColor::BLACK))//Maximizer Wins
 		{
@@ -221,7 +211,7 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 {
 	float value = EvaluatePieces(board, isMax);
 	TArray<AChessPiece*> pieces;
-	TArray<Chess_Move> moves = TArray<Chess_Move>();
+	TArray<TSharedPtr<Chess_Move>> moves = TArray<TSharedPtr<Chess_Move>>();
 	bool stall = true;//no legal moves -> stall
 	//is terminal:
 	if (value == -10000.0f)//MAX under checkmate
@@ -242,10 +232,6 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 
 	if (isMax)//Maximizer - White
 	{
-		//if (value >= beta)//Minimizer wont select this path, so prune
-		//{
-		//	return value;
-		//}
 		value = -20000.0f;//v <- -inf
 		pieces = board->GetPieces(WHITE);
 		for (auto& piece : pieces)
@@ -255,25 +241,22 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 
 		if (moves.IsEmpty())//stall
 		{
-			return 0;
+			return 0;//TODO:change this to a stall value (high value if loosing, low value if winning)
 		}
 
-		moves.Sort([](const Chess_Move& a, const  Chess_Move& b) {//order in descending order -> best move for white first
-			return a.MoveValue > b.MoveValue;
+		moves.Sort([](const TSharedPtr<Chess_Move>& a, const  TSharedPtr<Chess_Move>& b) {//order in descending order -> best move for white first
+			return a->MoveValue > b->MoveValue;
 			});
-		for (Chess_Move& move : moves)
+		for (TSharedPtr<Chess_Move> move : moves)
 		{
 			visitedNode++;
-			if (move.IsLegal())
+			if (move->IsLegal())
 			{
 				stall = false;
-				move.MakeMove(true);
-				if (move.MoveClass == MoveType::PAWN_PROMOTION)
-				{
-					move.PromotePawn(true, board->Queen);
-				}
+				board->HandledMakeAMove(move, true);
 				value = FMath::Max(value, AlfaBetaMinimax(alfa, beta, board, depth - 1, false));
-				move.RollbackMove(true);
+				board->HandledRollbackAMove(move, true);
+				//move->RollbackMove(true);
 				if (value >= beta)//Minimizer wont select this path, so prune
 				{
 					return value;
@@ -287,17 +270,13 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 
 		if (stall)
 		{
-			return 0;
+			return 0;//TODO:change this to a stall value (high value if loosing, low value if winning)
 		}
 
 		return value;
 	}
 	else //Minimizer - Black
 	{
-		//if (value <= alfa)//Minimizer wont select this path, so prune
-		//{
-		//	return value;
-		//}
 		value = 20000.0f;//v <- +inf
 		pieces = board->GetPieces(BLACK);
 
@@ -306,23 +285,24 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 			moves.Append(piece->GetPieceMoves());
 		}
 		
+		if (moves.IsEmpty())//stall
+		{
+			return 0;//TODO:change this to a stall value (low value if loosing, high value if winning)
+		}
 
-		moves.Sort([](const Chess_Move& a, const  Chess_Move& b) {//order in ascending order -> best move for black first
-			return a.MoveValue < b.MoveValue;
+		moves.Sort([](const TSharedPtr<Chess_Move>& a, const  TSharedPtr<Chess_Move>& b) {//order in ascending order -> best move for black first
+			return a->MoveValue < b->MoveValue;
 			});
-		for (Chess_Move& move : moves)
+		for (TSharedPtr<Chess_Move> move : moves)
 		{
 			visitedNode++;
-			if (move.IsLegal())
+			if (move->IsLegal())
 			{
 				stall = false;
-				move.MakeMove(true);
-				if (move.MoveClass == MoveType::PAWN_PROMOTION)
-				{
-					move.PromotePawn(true, board->Queen);
-				}
+				board->HandledMakeAMove(move, true);
 				value = FMath::Min(value, AlfaBetaMinimax(alfa, beta, board, depth - 1, true));
-				move.RollbackMove(true);
+				board->HandledRollbackAMove(move, true);
+				//move->RollbackMove(true);
 				if (value <= alfa)//Maximizer wont select this path, so prune
 				{
 					return value;
@@ -336,7 +316,7 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 
 		if (stall)
 		{
-			return 0;
+			return 0;//TODO:change this to a stall value (low value if loosing, high value if winning)
 		}
 
 		return value;
@@ -347,7 +327,6 @@ void AChess_MinimaxPlayer::ResetHandler()
 {
 	bIsMyTurn = PlayerColor == ChessColor::WHITE;
 	bIsMyTurn = bIsMyTurn;
-
 }
 
 

@@ -13,7 +13,7 @@
 
 AChess_GameMode::AChess_GameMode()
 {
-	//Variabili di GameModeBase:
+	//Gamemodebase properties:
 	PlayerControllerClass = AChess_PlayerController::StaticClass();
 	DefaultPawnClass = AChess_HumanPlayer::StaticClass();
 	//FieldSize = 8;
@@ -53,7 +53,7 @@ void AChess_GameMode::BeginPlay()
 
 	Players.Add(HumanPlayer);
 
-	if (UChess_GameInstance* GI = Cast<UChess_GameInstance>(GetGameInstance()))
+	if (UChess_GameInstance* GI = Cast<UChess_GameInstance>(GetGameInstance()))//getting the game difficulty from the game instance (setted in the main menu)
 	{
 		difficulty_level = GI->GameDifficulty;
 	}
@@ -165,7 +165,7 @@ void AChess_GameMode::TurnNextPlayer()
 		ToggleCurrentPlayer();
 		if (!bIsGameOver)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cambio turno"));
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cambio turno"));
 			Board->RestoreBoardColors();
 			Players[CurrentPlayer]->OnTurn();
 			UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));

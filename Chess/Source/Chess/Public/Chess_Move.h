@@ -6,16 +6,12 @@
 //#include "Chessboard.h"
 #include "CoreMinimal.h"
 
-/**
- * TODO: ADD CHECK AND CHECKMATE
- */
 class ASquare;
 class AChessPiece;
 class AChessboard;
 enum ChessColor;
 
-//DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMove, const FString, MovePerformed);
-
+//enum for the type of move, used to determine the class of the move
 UENUM()
 enum MoveType {
 	STANDARD,
@@ -29,7 +25,8 @@ class CHESS_API Chess_Move
 public:
 	MoveType MoveClass;
 	float MoveValue;
-	//attributes modified after the move is done, defaults NAC (not a color)
+
+	//attributes modified after the move is done and calculate result method is called, defaults NAC (not a color)
 	ChessColor PlayerOnCheck;		//if the move make opponent's king on check the color of the opponent is saved
 	ChessColor PlayerOnCheckMate;	//if the move make opponent's king on mate the color of the opponent is saved
 	ChessColor PlayerOnStall;		//if the move make opponent unable to move any piece the coloro of the opponent is saved
@@ -42,54 +39,38 @@ public:
 
 	AChessboard* ReferredBoard;
 
-	//bool bPromotionAfterMove = false;//setted by constructor if the moved piece is a pawn and reaches end of the board
-
 	Chess_Move(FVector2D f, FVector2D t, AChessboard* board);//generic move constructor
 
-	//TODO: Add pawn promotion constructor to avoid null actions in pawnpromotion
+	//Do - Undo methods for the move:
+	virtual void MakeMove(bool simulate); //overrided by child class
+	virtual void RollbackMove(bool simulate);
 
-	//enpassant move constructor : enPassantCapturePosition specify the position of the "special captured" piece
-	Chess_Move(FVector2D f, FVector2D t, AChessboard* board, FVector2D enPassantCapturePosition);
-	
-	Chess_Move(FVector2D f, FVector2D t, AChessboard* board, bool isQueenSide);
-
-	void MakeMove(bool simulate);
-	void RollbackMove(bool simulate);
-
-	void PromotePawn(bool simulate, TSubclassOf<AChessPiece> selectedPiece);//promote the pawn, if selectedPiece is null the method uses PawnPromotionAusRef as input
-
+	//Method to check if the move is legal or not (used to filter the moves that put king on check)
 	bool IsLegal();
+	
+	//Method to get the string representation of the move
+	virtual FString ToString() const;//overrided by castle and pawnpromotion
 
-	FString ToString() const;
+	//Method to get the color of the player that made the move
 	ChessColor GetMoveColor() const;
-	~Chess_Move();
-private:
-	//FString PieceLetter;
+	virtual ~Chess_Move() = default;
+
+protected:
+	//Static method to get the letter of the piece (used to print the move)
 	static FString GetPieceLetter(AChessPiece* piece);
 
+	//Method used to update PlayerOnCheck, PlayerOnCheckMate and PlayerOnStall
 	void CalculateResult();
 
-	AChessPiece* PawnPromotionAusRef = nullptr;//aus variable for rollback purpose
-	void PromotePawnRollback(bool simulate);
-
-
-	AChessPiece* EnPassantCapturedPiece = nullptr;//as variable to restore captured-enpassant pieces. Position is not needed because can be calculated on "From and To"
-	//FVector2D EnPassantCapturedPiecePosition;
-	void EnPassantCapture(bool simulate);
-	void EnPassantCaptureRollback(bool simulate);
-
-	bool bIsQueenSide; //bool used by Castle moves to identify the rook to move
-	AChessPiece* CastledRook;//saving the rook used in the castle
-	void CastleMove(bool simulate);
-	void CastleMoveRollback(bool simulate);
-
+	//Method to calculate the value of the move (value of eaten piece)
 	float MoveValueCalculation();//higher value = best move for white; lower value = best move for black;
 
+	//Methods used to update and rollback the castle variables of the board:
 	void UpdateCastleVariables();
 	void RollbackCastleVariables();
 
-	//bool bCastleVariablesWereModified[4] = {false, false, false, false};//0 -> long white castle, 1 -> short white castle, 2 -> long black castle, 3 -> short black castle
-	bool bSetWhiteCastleLongOnUndo = false;//variables used to remember if the castle variables have to be set on undo
+	//Auxiliar variables used to remember if the castle variables have to be set on RollbackCastleVariables
+	bool bSetWhiteCastleLongOnUndo = false;
 	bool bSetWhiteCastleShortOnUndo = false;
 	bool bSetBlackCastleLongOnUndo = false; 
 	bool bSetBlackCastleShortOnUndo = false;

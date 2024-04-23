@@ -26,9 +26,9 @@ public:
 	void SetColorAndMaterial(ChessColor c);
 	//GetPieceMoves get all the possible moves of a piece, no regarding at check situations or similar
 
-	virtual TArray<Chess_Move>GetPieceMoves() PURE_VIRTUAL(AChessPiece::GetPieceMoves, return TArray<Chess_Move>(););
+	virtual TArray<TSharedPtr<Chess_Move>>GetPieceMoves() PURE_VIRTUAL(AChessPiece::GetPieceMoves, return TArray<TSharedPtr<Chess_Move>>(););
 
-	TArray<Chess_Move> GetPieceLegalMoves();
+	TArray<TSharedPtr<Chess_Move>> GetPieceLegalMoves();
 
 	virtual float GetPieceValue() PURE_VIRTUAL(AChessPiece::GetPieceValue, return float(););//return piece value
 
@@ -56,7 +56,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	//Asuiliary methods for Queen and Rook:
-	static void GetFeasibleDiagonals(AChessPiece* piece, TArray<Chess_Move>& moves);
+	static void GetFeasibleDiagonals(AChessPiece* piece, TArray<TSharedPtr<Chess_Move>>& moves);
 	//Asuiliary methods for Queen and Bishop moves:
-	static void GetFeasibleCross(AChessPiece* piece, TArray<Chess_Move>& moves);
+	static void GetFeasibleCross(AChessPiece* piece, TArray<TSharedPtr<Chess_Move>>& moves);
 };

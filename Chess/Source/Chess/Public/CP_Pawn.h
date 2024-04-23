@@ -37,10 +37,20 @@ public:
 		{5.0,  5.0,  5.0,  5.0,  5.0,  5.0,  5.0,  5.0},
 		{0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0}
 	};
-	TArray<Chess_Move>GetPieceMoves() override;
+	TArray<TSharedPtr<Chess_Move>>GetPieceMoves() override;
 	float GetPieceValue() override;
 	float GetPositionValue(FVector2D xy) override {
 		float tmp = PieceColor == ChessColor::WHITE ? WhiteEvalMatrix[xy.Y][xy.X] : BlackEvalMatrix[xy.Y][xy.X];
 		return tmp;
 	}
+	void PromoteIn(CP promotedPiece);
+	bool bIsPromoted = false;
+	AChessPiece* PromotedPiece;//TODO: Spawn the pieces in the begin play and hide them
+protected:
+	// Called when the game starts or when spawned
+private:
+	AChessPiece* KnightPromotion;
+	AChessPiece* BishopPromotion;
+	AChessPiece* RookPromotion;
+	AChessPiece* QueenPromotion;
 };

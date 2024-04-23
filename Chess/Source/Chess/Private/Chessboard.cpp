@@ -49,7 +49,7 @@ void AChessboard::BeginPlay()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("SquareClass non trovata in GameField"));
+		UE_LOG(LogTemp, Error, TEXT("SquareClass non trovata in ChessBoard"));
 	}
 }
 
@@ -255,13 +255,13 @@ TSharedPtr<Chess_Move> AChessboard::GetMoveShowedOnBoard()
 	return nullptr;
 }
 
-TArray<Chess_Move> AChessboard::GetMovesAndShowHints(AChessPiece* Piece, bool showMoves)
+TArray<TSharedPtr<Chess_Move>> AChessboard::GetMovesAndShowHints(AChessPiece* Piece, bool showMoves)
 {
 	TArray<FVector2D> xys = TArray<FVector2D>();
-	TArray<Chess_Move> moves = Piece->GetPieceLegalMoves();
-	for (Chess_Move& move : moves)
+	TArray<TSharedPtr<Chess_Move>> moves = Piece->GetPieceLegalMoves();
+	for (TSharedPtr<Chess_Move> move : moves)
 	{
-		FVector2D xy = move.To;
+		FVector2D xy = move->To;
 		ASquare* square = GetSquareFromXY(xy);
 		if (square && !square->IsDanger()) {
 			square->SetAsSelected();
@@ -368,8 +368,8 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	//	}
 	//}
 	return Piece;
-}
-/*
+}/*
+//TEST CHESSBOARD:
 AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY)
 {
 	//TODO: TESTA L'ARROCCO ARTIFICIALMENTE
@@ -377,63 +377,27 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	FRotator Rotation = FRotator(0, 0, 0);
 	AChessPiece* Piece = nullptr;
 
-
-	if (InX == 0 && InY == 0) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
-		Piece->SetColorAndMaterial(BLACK);
+	if (InX == 0 && InY == 6) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+		Piece->SetColorAndMaterial(WHITE);
 	}
-	if (InX == 0 && InY == 1) {
+	if (InX == 0 && InY == 5) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
 		Piece->SetColorAndMaterial(BLACK);
 	}
 
-	if (InX == 7 && InY == 0) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
-		Piece->SetColorAndMaterial(BLACK);
-	}
-	//if (InX == 7 && InY == 1) {
-	//	Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-	//	Piece->SetColorAndMaterial(BLACK);
-	//}
-	if (InX == 6 && InY == 1) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		Piece->SetColorAndMaterial(WHITE);
-	}
-	if (InX == 1 && InY == 1) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		Piece->SetColorAndMaterial(WHITE);
-	}
-
-
-	if (InX == 4 && InY == 7) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, Rotation);
-		Piece->SetColorAndMaterial(WHITE);
-		WhiteKing = Piece;
-	}
-
-	if (InX == 4 && InY == 0) {
+	if (InX == 3 && InY == 5) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, Rotation);
 		Piece->SetColorAndMaterial(BLACK);
 		BlackKing = Piece;
 	}
 
-	//if (InX == 1 && InY == 6) {
-	//	Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-	//	Piece->SetColorAndMaterial(BLACK);
-	//}
-	if (InX == 0 && InY == 7) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
+	if (InX == 1 && InY == 7) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, Rotation);
 		Piece->SetColorAndMaterial(WHITE);
-	}
-	if (InX == 1 && InY == 6) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		Piece->SetColorAndMaterial(BLACK);
+		WhiteKing = Piece;
 	}
 
-	if (InX == 7 && InY == 7) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Rook, Location, Rotation);
-		Piece->SetColorAndMaterial(WHITE);
-	}
 	//if (InX == 7 && InY == 6) {
 	//	Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
 	//	Piece->SetColorAndMaterial(BLACK);
@@ -575,30 +539,25 @@ FVector2D AChessboard::GetXYPositionByRelativeLocation(const FVector& Location) 
 {
 	const double x = Location[0] / SquareSize;
 	const double y = Location[1] / SquareSize;
-	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("x=%f,y=%f"), x, y));
 	return FVector2D(x, y);
 }
 
 TSharedPtr<Chess_Move> AChessboard::PromoteLastMove(CP ChessPieceEnum)
 {
-	TSubclassOf<AChessPiece> selectedClass = nullptr;
-	switch (ChessPieceEnum) {
-	case CP::KNIGHT:
-		selectedClass = Knight;
-		break;
-	case CP::ROOK:
-		selectedClass = Rook;
-		break;
-	case CP::BISHOP:
-		selectedClass = Bishop;
-		break;
-	case CP::QUEEN:
-		selectedClass = Queen;
-		break;
-	default:
-		UE_LOG(LogTemp, Error, TEXT("PromoteLastMove: Unexpected CP enum value"));
+	if (StackMoves.Top() && StackMoves.Top()->MoveClass == MoveType::PAWN_PROMOTION) {
+		if (Chess_MovePawnPromotion* pawnPromotionMove = static_cast<Chess_MovePawnPromotion*>(StackMoves.Top().Get())) {
+			pawnPromotionMove->PromotePawn(false, ChessPieceEnum);
+			RestoreBoardColors();
+
+			pawnPromotionMove->RollbackMove(false);//force the rollback of the move to avoid fake check
+			pawnPromotionMove->MakeMove(false);
+
+			if (AChess_GameMode* GameModeRef = Cast<AChess_GameMode>(UGameplayStatics::GetGameMode(GetWorld())))
+			{
+				GameModeRef->UpdateLastMove(StackMoves.Top());
+			}
+		}
 	}
-	StackMoves.Top()->PromotePawn(false, selectedClass);
 	return StackMoves.Top();
 }
 
@@ -633,7 +592,7 @@ bool AChessboard::CheckControl(ChessColor C)
 	{
 		for(auto& pieceMove : Piece_XY->GetPieceMoves())
 		{ 
-			if (pieceMove.To == *KingPosition)
+			if (pieceMove->To == *KingPosition)
 			{
 				return true;
 			}
@@ -674,8 +633,8 @@ bool AChessboard::MateControl(ChessColor C)
 	for (auto& Piece : ActualOwnedPieces)
 	{
 		FVector2D oldPos = Piece->PiecePosition;
-		for (Chess_Move& tmpMove : Piece->GetPieceMoves()) {
-			if (tmpMove.IsLegal())
+		for (TSharedPtr<Chess_Move> tmpMove : Piece->GetPieceMoves()) {
+			if (tmpMove->IsLegal())
 			{
 				return false;
 			}
@@ -694,6 +653,11 @@ bool AChessboard::StallControl(ChessColor C)
 		return false;
 	}
 	ActualOwnedPieces = C == WHITE ? WhitePieces : BlackPieces;
+
+	if (!StackMoves.IsEmpty() && StackMoves.Top()->PlayerOnCheck != ChessColor::NAC)
+	{
+		return false;//not a stall but a check/Checkmate
+	}
 
 	for (auto& Piece : ActualOwnedPieces)
 	{
@@ -729,8 +693,8 @@ void AChessboard::HandledMakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 	if (!simulate)
 	{
 		float pv = WhiteMaterial - BlackMaterial;//white material - black material
-		int32 tmp1 = move->From.X, tmp2 = move->From.Y, tmp3 = move->To.X, tmp4 = move->To.Y;
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Il valore della mossa da %d, %d a %d, %d è %f:->%f"), tmp1, tmp2, tmp3, tmp4, value, pv));
+		//int32 tmp1 = move->From.X, tmp2 = move->From.Y, tmp3 = move->To.X, tmp4 = move->To.Y;
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Il valore della mossa da %d, %d a %d, %d è %f:->%f"), tmp1, tmp2, tmp3, tmp4, value, pv));
 
 		StackMoves.Push(move);
 		//OnMove.Broadcast(move->ToString());
