@@ -58,7 +58,7 @@ public:
 	//Method that notify the HUD to show pawn promotion widget
 	void ShowPromotionWidget(ChessColor playerColor);
 
-	//Broadcast HUD and chessboard to rollback chessboard state and HUD to the specified turn
+	//Broadcast HUD and chessboard to rollback chessboard state and HUD to the specified turn, loosing all the moves after the specified turn
 	void GoBackToActualMove();
 
 	//Broadcast HUD and chessboard that turn is passed to the specified player (if true is passed the player is the human player)

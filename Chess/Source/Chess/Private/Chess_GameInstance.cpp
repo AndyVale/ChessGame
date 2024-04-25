@@ -14,7 +14,6 @@ void UChess_GameInstance::UpdateScoreSignal()
 	OnScoreUpdate.Broadcast();
 }
 
-
 void UChess_GameInstance::IncrementScoreHumanPlayer()
 {
 	ScoreHumanPlayer += 1;
@@ -29,13 +28,11 @@ void UChess_GameInstance::IncrementScoreAIPlayer()
 
 int32 UChess_GameInstance::GetScoreHumanPlayer()
 {
-	//return FMath::Rand();
 	return ScoreHumanPlayer;
 }
 
 int32 UChess_GameInstance::GetScoreAIPlayer()
 {
-	//return FMath::Rand();
 	return ScoreAIPlayer;
 }
 

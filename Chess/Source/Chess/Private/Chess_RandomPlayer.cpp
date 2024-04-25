@@ -10,9 +10,13 @@ AChess_RandomPlayer::AChess_RandomPlayer()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-	PlayerColor= BLACK;
+	PlayerColor = BLACK;
 	bIsMyTurn = false;
 	GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (!GameInstanceRef)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameInstanceRef is null in AChess_RandomPlayer"));
+	}
 }
 
 // Called when the game starts or when spawned
@@ -21,7 +25,11 @@ void AChess_RandomPlayer::BeginPlay()
 	Super::BeginPlay();
 	if (GameInstanceRef)
 	{
-		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_RandomPlayer::ResetHandler);//TODO: this is a workaround, search for a better solution
+		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_RandomPlayer::ResetHandler);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameInstanceRef is null in AChess_RandomPlayer in begin play"));
 	}
 }
 
@@ -43,59 +51,59 @@ void AChess_RandomPlayer::OnTurn()
 	{
 		GameMode->PlayerSwapNotify(false);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameMode is null in AChess_RandomPlayer OnTurn"));
+	}
 	bIsMyTurn = true;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&] {AChess_RandomPlayer::MakeRandomMove(); }, 2, false);
 }
 void AChess_RandomPlayer::MakeRandomMove() {
-//	if(GetWorld())
 	if (AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode()))
 	{
 		AChessboard* Board = GameMode->Board;
-		TArray<AChessPiece*> ActualPieces = Board->GetPieces(PlayerColor);
-		TArray<bool> actualIsVisited;
-		TArray<AChessPiece*> actualPiece;
-		TArray<FVector2D> actualXY;
+		TArray<AChessPiece*> ActualPieces = Board->GetPieces(PlayerColor);//get the pieces of the player
 
-		for (auto& p : ActualPieces) {
-			actualIsVisited.Add(false);
-			actualPiece.Add(p);
-			actualXY.Add(p->PiecePosition);
+		if (ActualPieces.IsEmpty())
+		{//should never happen (at least the king should be there)
+			UE_LOG(LogTemp, Error, TEXT("No pieces to move in AChess_RandomPlayer"));
+			return;
 		}
 
-		int32 piecesNumber = actualIsVisited.Num();
+		int32 piecesNumber = ActualPieces.Num();
+		TArray<bool> actualIsVisited;
+		actualIsVisited.Init(false, piecesNumber);//initialize the array of visited pieces to false for all the pieces
 		TArray<TSharedPtr<Chess_Move>> possibleMoves;
 		int numSize = 0;
 		int32 randomPieceIndx = 0;
 
 		do {
 			randomPieceIndx = FMath::Rand() % piecesNumber;
-			if (!actualIsVisited[randomPieceIndx]) {
-				possibleMoves = actualPiece[randomPieceIndx]->GetPieceLegalMoves();
-				numSize = possibleMoves.Num();
+			if (!actualIsVisited[randomPieceIndx]) {//if the piece has not been visited
+				possibleMoves = ActualPieces[randomPieceIndx]->GetPieceLegalMoves();//get the possible moves of the piece
+				numSize = possibleMoves.Num();//get the number of possible moves
 				actualIsVisited[randomPieceIndx] = true;
 			}
-		} while (numSize == 0 && actualIsVisited.Find(false) != INDEX_NONE);//get a piece that can be moved
+		} while (numSize == 0 && actualIsVisited.Find(false) != INDEX_NONE);//until we find a piece with possible moves or we have visited all the pieces
+
 		TSharedPtr<Chess_Move> randomMovePtr = nullptr;
+		
 		if (bIsMyTurn) {
-			if (numSize != 0)
+			if (numSize != 0)//if there are possible moves (if not, the game is over)
 			{
 				int32 randomMoveIndx = FMath::Rand() % numSize;
-				randomMovePtr = possibleMoves[randomMoveIndx];
+				randomMovePtr = possibleMoves[randomMoveIndx];//get a random move
 				Board->HandledMakeAMove(randomMovePtr, false);
-				//Chess_Move succMove = Chess_Move(oldLoc, newLoc);
 			}
 			else
 			{
-				//STALLO
+				//STALL
 			}
-			//f (randomMovePtr && randomMovePtr->MoveClass == MoveType::PAWN_PROMOTION) {
-			//	TArray<CP> randomPromotedPiece = { CP::BISHOP, CP::KNIGHT, CP::ROOK, CP::QUEEN };
-			//	int32 randomPromotionIndx = FMath::Rand() % randomPromotedPiece.Num();
-			//	//Board->PromoteLastMove(randomPromotedPiece[randomPromotionIndx]);
-			//
+
 			if (randomMovePtr) {
 				GameMode->UpdateLastMove(randomMovePtr);//notify the HUD of the move
 			}
+
 			bIsMyTurn = false;
 			GameMode->TurnNextPlayer();
 		}
@@ -108,8 +116,4 @@ void AChess_RandomPlayer::OnWin()
 	GameInstanceRef->IncrementScoreAIPlayer();
 }
 
-void AChess_RandomPlayer::OnLose()
-{
-	GameInstanceRef->SetTurnMessage(TEXT("Random player Lose!"));
-}
 

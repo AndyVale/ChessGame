@@ -72,7 +72,7 @@ public:
 	FString GetTurnMessage();
 	
 private:
-	// score value for human players
+	//Broadcast the reset event
 	//UFUNCTION(BlueprintCallable)
 	void ResetSignal();
 

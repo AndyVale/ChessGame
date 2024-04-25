@@ -17,57 +17,19 @@ Chess_Move::Chess_Move(FVector2D f, FVector2D t, AChessboard* board) :
     CapturingPiece = board->GetPieceFromXY(f);
     if (CapturingPiece == nullptr)
     {
-        int a = 5;
+        UE_LOG(LogTemp, Error, TEXT("Chess_Move:No pieces in old position in the constructor"));
     }
     CapturedPiece = board->GetPieceFromXY(t);
     MoveClass = STANDARD;
-    //PieceLetter = GetPieceLetter(PieceFrom);
-    //if the piece get the opposite end of the board
-    //if (GetMoveColor() == ChessColor::BLACK && To.Y == ReferredBoard->BoardSize - 1 || GetMoveColor() == ChessColor::WHITE && To.Y == 0)
-    //{
-    //    if (ACP_Pawn* pawn = Cast<ACP_Pawn>(CapturingPiece))//and is a pawn->needs a promotion
-    //    {
-    //        MoveClass = MoveType::PAWN_PROMOTION;
-    //    }
-    //}
     MoveValue = MoveValueCalculation();
 }
-/*
-Chess_Move::Chess_Move(FVector2D f, FVector2D t, AChessboard* board, FVector2D enPassantCapturePosition) : 
-    PlayerOnCheck(ChessColor::NAC), PlayerOnCheckMate(ChessColor::NAC), PlayerOnStall(ChessColor::NAC), From(f), To(t), ReferredBoard(board)
-{
-    MoveClass = EN_PASSANT;
-    CapturingPiece = board->GetPieceFromXY(f);
-    if (CapturingPiece == nullptr)
-    {
-        int a = 5;
-    }
-    CapturedPiece = board->GetPieceFromXY(t);
-    EnPassantCapturedPiece = board->GetPieceFromXY(enPassantCapturePosition);
-    MoveValue = MoveValueCalculation();
-}
-
-
-Chess_Move::Chess_Move(FVector2D f, FVector2D t, AChessboard* board, bool isQueenSide) :
-    PlayerOnCheck(ChessColor::NAC), PlayerOnCheckMate(ChessColor::NAC), PlayerOnStall(ChessColor::NAC), From(f), To(t), ReferredBoard(board)
-{
-    MoveClass = CASTLE;
-    CapturingPiece = board->GetPieceFromXY(f);
-    if (CapturingPiece == nullptr)
-    {
-        int a = 5;
-    }
-    CapturedPiece = board->GetPieceFromXY(t);
-    MoveValue = MoveValueCalculation();
-    bIsQueenSide = isQueenSide;
-}
-*/
-
 
 void Chess_Move::CalculateResult()
 {
     ChessColor OpponentColor = CapturingPiece->PieceColor == WHITE ? BLACK : WHITE;
     PlayerOnCheck = PlayerOnCheckMate = PlayerOnStall = ChessColor::NAC;
+
+    //Calculate if the opponent is in check, checkmate or stall and change the variables accordingly (a sort of cache to avoid recalculating the same thing multiple times)
     if (ReferredBoard->CheckControl(OpponentColor))
     {
         PlayerOnCheck = OpponentColor;
@@ -116,22 +78,6 @@ void Chess_Move::MakeMove(bool simulate)
         (CapturingPiece)->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(To[0], To[1]));
     }
 
-    //CalculateResult test for check, checkmate and stall. Is importat to avoid this procedure in case it's a simulative move (for performance reasons)
-    //if (MoveClass == MoveType::PAWN_PROMOTION)
-    //{
-    //    PromotePawn(simulate, nullptr);
-    //}
-
-    //if (MoveClass == MoveType::EN_PASSANT)
-    //{
-    //    EnPassantCapture(simulate);
-    //}
-
-    //if (MoveClass == MoveType::CASTLE)
-   // {
-    //    CastleMove(simulate); //TODO //IL MINIMAX NON FUNZIONA CON L'ARROCO, alcune CastledRook risultano null (inconsistenza tra arrocchi possibili ed effettivamente fattibili)
-   // }
-
     if (!simulate)
     {
         CalculateResult();
@@ -143,26 +89,10 @@ void Chess_Move::MakeMove(bool simulate)
 
 void Chess_Move::RollbackMove(bool simulate)
 {
-    //if (MoveClass == MoveType::CASTLE)
-    //{
-    //    CastleMoveRollback(simulate);
-    //}
+    ReferredBoard->RemovePiece(CapturingPiece);//remove the moved piece
 
-    //if (MoveClass == MoveType::EN_PASSANT)
-    //{
-    //    EnPassantCaptureRollback(simulate);
-    //}
-
-    //if (MoveClass == MoveType::PAWN_PROMOTION && PawnPromotionAusRef)//if move was a promotion and was already done
-    //{
-    //    PromotePawnRollback(simulate);
-    //}
-
-    //ReferredBoard->RemovePiece(CapturedPiece);
-    ReferredBoard->RemovePiece(CapturingPiece);
-
-    ReferredBoard->SetPieceFromXY(To, CapturedPiece);
-    ReferredBoard->SetPieceFromXY(From, CapturingPiece);
+    ReferredBoard->SetPieceFromXY(To, CapturedPiece);//put back the captured piece
+    ReferredBoard->SetPieceFromXY(From, CapturingPiece);//put back the capturing piece
 
 
     if (CapturedPiece)
@@ -174,8 +104,8 @@ void Chess_Move::RollbackMove(bool simulate)
         }
     }
 
-    if (CapturingPiece) {
-
+    if (CapturingPiece)
+    {
         if (!simulate)
         {
             CapturingPiece->SetActorHiddenInGame(false);
@@ -188,7 +118,7 @@ void Chess_Move::RollbackMove(bool simulate)
 
 bool Chess_Move::IsLegal()
 {
-    MakeMove(true);
+    MakeMove(true);//a move is legal if the king is not in check after the move
     bool isLegal = !ReferredBoard->CheckControl(GetMoveColor());
     RollbackMove(true);
     return isLegal;
@@ -196,6 +126,7 @@ bool Chess_Move::IsLegal()
 
 float Chess_Move::MoveValueCalculation()
 {
+    //move value is calculated based on heuristics
     float value = 0;
     if (CapturingPiece)
     {
@@ -224,6 +155,7 @@ float Chess_Move::MoveValueCalculation()
 
 void Chess_Move::UpdateCastleVariables()
 {
+    //Method check if in the move the castle variables have to be updated and set the auxiliar variables to remember if they have to be set on RollbackCastleVariables
     bool isWhite = GetMoveColor() == ChessColor::WHITE;
 
     if ((isWhite && ReferredBoard->bCastleWhiteLong && From == FVector2D(0, 7)) || (!isWhite && ReferredBoard->bCastleWhiteLong && To == FVector2D(0, 7)))//long castle was feasible and moved the rook/captured the rook
@@ -360,153 +292,3 @@ FString Chess_Move::GetPieceLetter(AChessPiece* piece)
     }
     return FString("");
 }
-
-/*
-//--------------------- PawnPromotion methods
-
-void Chess_Move::PromotePawnRollback(bool simulate)
-{
-    //if (simulate) return;
-
-    if (PawnPromotionAusRef == nullptr)
-    {
-        UE_LOG(LogTemp, Error, TEXT("PromoteRollbackPawn:Impossible rollback, no promoted piece found"));
-        return;
-    }
-    if (!ReferredBoard->GetXYFromPiece(CapturingPiece))
-    {
-        return;
-    }
-    //swap pieces:
-    AChessPiece* swapVar = CapturingPiece;//TODO: (Label=L"robacinese",Name="None) problem
-    ReferredBoard->RemovePiece(CapturingPiece);
-    CapturingPiece = PawnPromotionAusRef;
-    PawnPromotionAusRef = swapVar;
-    ReferredBoard->SetPieceFromXY(To, CapturingPiece);
-
-    if (!simulate)
-    {
-        CapturingPiece->SetActorHiddenInGame(false);
-        CapturingPiece->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(To[0], To[1]));//put the piece in the position
-        PawnPromotionAusRef->SetActorHiddenInGame(true);
-    }
-    else {//if was a simulate move destory the promoted piece to avoid memory leak (TODO: controlla se unreal lo fa già da solo)
-        PawnPromotionAusRef->Destroy();
-        PawnPromotionAusRef = nullptr;//to make it possible tu reassign a new piece as promoted piece
-    }
-}
-
-void Chess_Move::PromotePawn(bool simulate, TSubclassOf<AChessPiece> selectedPiece)
-{
-    if (selectedPiece != nullptr)//first promotion (not executed if is a replay)
-    {
-        FVector position = ReferredBoard->GetRelativeLocationByXYPosition(To.X, To.Y);
-        FRotator rotation = FRotator(0, 0, 0);
-        ChessColor pColor = GetMoveColor();
-        if (PawnPromotionAusRef != nullptr) {//never reached (in theory)
-            PawnPromotionAusRef->Destroy();
-        }
-        PawnPromotionAusRef = ReferredBoard->GetWorld()->SpawnActor<AChessPiece>(selectedPiece, position, rotation);
-        PawnPromotionAusRef->SetColorAndMaterial(pColor);
-        PawnPromotionAusRef->SetActorHiddenInGame(true);
-    }
-
-    if (PawnPromotionAusRef) {//swap pieces
-        AChessPiece* swapVar = CapturingPiece;
-        if (!simulate) {//show the effective piece
-            CapturingPiece->SetActorHiddenInGame(true);
-            PawnPromotionAusRef->SetActorHiddenInGame(false);
-            CapturingPiece->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(-1, -1));//Move chesspiece away from chessboard to avoid fake click
-        }
-
-        ReferredBoard->RemovePiece(CapturingPiece);
-        CapturingPiece = PawnPromotionAusRef;
-        PawnPromotionAusRef = swapVar;
-        ReferredBoard->SetPieceFromXY(To, CapturingPiece);
-    }
-    CalculateResult();//update attributes for "toString" method
-}
-
-//--------------------- EnPassant methods
-
-void Chess_Move::EnPassantCapture(bool simulate)
-{
-    //capture piece:
-    if (EnPassantCapturedPiece)
-    {
-        ReferredBoard->RemovePiece(EnPassantCapturedPiece);
-        if (!simulate)
-        {
-            if (EnPassantCapturedPiece->PieceColor == BLACK)//TODO:RIARRANGIA
-                EnPassantCapturedPiece->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(-1, -1));
-            else
-                EnPassantCapturedPiece->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(8, 8));
-            EnPassantCapturedPiece->SetActorHiddenInGame(true);
-        }
-    }
-}
-
-void Chess_Move::EnPassantCaptureRollback(bool simulate)
-{
-    //restore piece:
-    if (EnPassantCapturedPiece)
-    {
-        FVector2D EnPassantCapturedPiecePosition = FVector2D(To.X, From.Y);
-        ReferredBoard->SetPieceFromXY(EnPassantCapturedPiecePosition, EnPassantCapturedPiece);
-        if (!simulate)
-        {
-            EnPassantCapturedPiece->SetActorHiddenInGame(false);
-            EnPassantCapturedPiece->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(EnPassantCapturedPiecePosition.X, EnPassantCapturedPiecePosition.Y));
-        }
-    }
-}
-
-//--------------------- Castle methods
-
-
-void Chess_Move::CastleMove(bool simulate)
-{
-    FVector2D newRookPosition;
-    if (bIsQueenSide)
-    {
-        FVector2D   BlackLeftRookPosition = FVector2D(0, 0), WhiteLeftRookPosition = FVector2D(0, 7), rookBlackQueenSidePos = FVector2D(3, 0), rookWhiteQueenSidePos = FVector2D(3, 7);
-        CastledRook = GetMoveColor() == ChessColor::WHITE ? ReferredBoard->GetPieceFromXY(WhiteLeftRookPosition) : ReferredBoard->GetPieceFromXY(BlackLeftRookPosition);
-        newRookPosition = GetMoveColor() == ChessColor::WHITE ? rookWhiteQueenSidePos : rookBlackQueenSidePos;
-    }
-    else
-    {
-        FVector2D BlackRightRookPosition = FVector2D(7, 0), WhiteRightRookPosition = FVector2D(7, 7),rookBlackKingSidePos = FVector2D(5, 0), rookWhiteKingSidePos = FVector2D(5, 7);
-        CastledRook = GetMoveColor() == ChessColor::WHITE ? ReferredBoard->GetPieceFromXY(WhiteRightRookPosition) : ReferredBoard->GetPieceFromXY(BlackRightRookPosition);
-        newRookPosition = GetMoveColor() == ChessColor::WHITE ? rookWhiteKingSidePos : rookBlackKingSidePos;
-    }
-    ReferredBoard->RemovePiece(CastledRook);
-    ReferredBoard->SetPieceFromXY(newRookPosition, CastledRook);
-    
-    if (!simulate)
-    {
-        CastledRook->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(newRookPosition.X, newRookPosition.Y));
-    }
-}
-
-void Chess_Move::CastleMoveRollback(bool simulate)
-{
-    FVector2D oldRookPosition;
-    if (bIsQueenSide)
-    {
-        FVector2D BlackLeftRookPosition = FVector2D(0, 0), WhiteLeftRookPosition = FVector2D(0, 7), rookBlackQueenSidePos = FVector2D(3, 0), rookWhiteQueenSidePos = FVector2D(3, 7);
-        oldRookPosition = GetMoveColor() == ChessColor::WHITE ? WhiteLeftRookPosition : BlackLeftRookPosition;
-    }
-    else
-    {
-        FVector2D BlackRightRookPosition = FVector2D(7, 0), WhiteRightRookPosition = FVector2D(7, 7), rookBlackKingSidePos = FVector2D(5, 0), rookWhiteKingSidePos = FVector2D(5, 7);
-        oldRookPosition = GetMoveColor() == ChessColor::WHITE ? WhiteRightRookPosition : BlackRightRookPosition;
-    }
-    ReferredBoard->RemovePiece(CastledRook);
-    ReferredBoard->SetPieceFromXY(oldRookPosition, CastledRook);
-
-    if (!simulate)
-    {
-        CastledRook->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(oldRookPosition.X, oldRookPosition.Y));
-    }
-}
-*/

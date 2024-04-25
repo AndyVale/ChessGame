@@ -7,22 +7,25 @@
 
 TArray<TSharedPtr<Chess_Move>> ACP_Pawn::GetPieceMoves()
 {
-	if (bIsPromoted)
+	if (bIsPromoted)//if the pawn is promoted, return the promoted piece moves
 	{
 		PromotedPiece->ReferredBoard = ReferredBoard;
 		PromotedPiece->PiecePosition = PiecePosition;
 		return PromotedPiece->GetPieceMoves();
 	}
+	//else return the pawn moves:
+
 	TArray<TSharedPtr<Chess_Move>> moves = TArray<TSharedPtr<Chess_Move>>();
 	int max = ReferredBoard->BoardSize;
 	int x = PiecePosition[0], y = PiecePosition[1];
+
 	if (this->PieceColor == BLACK)//go from 0 to max
 	{
 		if (y + 1 < max - 1) {//move forwards
 			if (!ReferredBoard->GetPieceFromXY(FVector2D(x, y + 1)))
 			{
 				moves.Add(MakeShareable<Chess_Move>(new Chess_Move(PiecePosition, FVector2D(x, y + 1), ReferredBoard)));
-				if (y == 1 && !ReferredBoard->GetPieceFromXY(FVector2D(x, y + 2)))
+				if (y == 1 && !ReferredBoard->GetPieceFromXY(FVector2D(x, y + 2)))//move by two at the beginning
 				{
 					moves.Add(MakeShareable<Chess_Move>(new Chess_Move(PiecePosition, FVector2D(x, y + 2), ReferredBoard)));
 				}
@@ -42,7 +45,7 @@ TArray<TSharedPtr<Chess_Move>> ACP_Pawn::GetPieceMoves()
 			{
 				moves.Add(MakeShareable<Chess_Move>(new Chess_MovePawnPromotion(PiecePosition, FVector2D(x, y + 1), ReferredBoard, CP::QUEEN)));
 				moves.Add(MakeShareable<Chess_Move>(new Chess_MovePawnPromotion(PiecePosition, FVector2D(x, y + 1), ReferredBoard, CP::KNIGHT)));
-				//moves.Add(MakeShareable<Chess_Move>(new Chess_MovePawnPromotion(PiecePosition, FVector2D(x, y + 1), ReferredBoard, CP::BISHOP))); //Commented to optimize the code
+				//moves.Add(MakeShareable<Chess_Move>(new Chess_MovePawnPromotion(PiecePosition, FVector2D(x, y + 1), ReferredBoard, CP::BISHOP))); //Commented to optimize the performance in minimax recursion
 				//moves.Add(MakeShareable<Chess_Move>(new Chess_MovePawnPromotion(PiecePosition, FVector2D(x, y + 1), ReferredBoard, CP::ROOK)));
 			}
 			if (x + 1 < max && ReferredBoard->GetPieceColorFromXY(FVector2D(x + 1, y + 1)) == WHITE)
@@ -68,7 +71,7 @@ TArray<TSharedPtr<Chess_Move>> ACP_Pawn::GetPieceMoves()
 			if (!ReferredBoard->GetPieceFromXY(FVector2D(x, y - 1)))
 			{
 				moves.Add(MakeShareable<Chess_Move>(new Chess_Move(PiecePosition, FVector2D(x, y - 1), ReferredBoard)));
-				if (y == 6 && !ReferredBoard->GetPieceFromXY(FVector2D(x, y - 2)))
+				if (y == 6 && !ReferredBoard->GetPieceFromXY(FVector2D(x, y - 2)))//move by two at the beginning
 				{
 					moves.Add(MakeShareable<Chess_Move>(new Chess_Move(PiecePosition, FVector2D(x, y - 2), ReferredBoard)));
 				}
@@ -108,9 +111,9 @@ TArray<TSharedPtr<Chess_Move>> ACP_Pawn::GetPieceMoves()
 
 	}
 
-	if (FMath::Abs(ReferredBoard->EnPassantPossibleCapture.X - PiecePosition.X) == 1 && ReferredBoard->EnPassantPossibleCapture.Y == PiecePosition.Y)
+	if (FMath::Abs(ReferredBoard->EnPassantPossibleCapture.X - PiecePosition.X) == 1 && ReferredBoard->EnPassantPossibleCapture.Y == PiecePosition.Y)//en passant capture check
 	{
-		FVector2D To = FVector2D(ReferredBoard->EnPassantPossibleCapture.X, ReferredBoard->EnPassantPossibleCapture.Y + (PieceColor == ChessColor::WHITE ? -1 : +1));
+		FVector2D To = FVector2D(ReferredBoard->EnPassantPossibleCapture.X, ReferredBoard->EnPassantPossibleCapture.Y + (PieceColor == ChessColor::WHITE ? -1 : +1));//enpassant possible capture is at the position saved in chessboard
 		moves.Add(MakeShareable<Chess_Move>(new Chess_MoveEnPassant(PiecePosition, To, ReferredBoard, ReferredBoard->EnPassantPossibleCapture)));
 	}
 
@@ -124,13 +127,14 @@ float ACP_Pawn::GetPieceValue()
 
 void ACP_Pawn::PromoteIn(CP promotedPiece)
 {
+	//I decided to save here the promoted pieces to avoid spawning a new piece in every Chess_MovePawnPromotion
 	switch
 		(promotedPiece)
-	{
+	{//TODO: change spawning location and rotation to a fixed value 
 		case CP::BISHOP:
-			if (!BishopPromotion)
+			if (!BishopPromotion)//if the piece is not already spawned, spawn it and set its color, bind it as promoted piece
 			{
-				BishopPromotion = GetWorld()->SpawnActor<AChessPiece>(ReferredBoard->Bishop, FVector(FMath::Rand(), FMath::Rand(), FMath::Rand()), FRotator(FMath::Rand(), FMath::Rand(), FMath::Rand()));
+				BishopPromotion = GetWorld()->SpawnActor<AChessPiece>(ReferredBoard->Bishop, FVector(FMath::Rand(), FMath::Rand(), FMath::Rand()), FRotator(FMath::Rand(), FMath::Rand(), FMath::Rand()));//random location and rotation to avoid overlapping
 				BishopPromotion->SetColorAndMaterial(PieceColor);
 			}
 			PromotedPiece = BishopPromotion;
@@ -149,6 +153,7 @@ void ACP_Pawn::PromoteIn(CP promotedPiece)
 				RookPromotion = GetWorld()->SpawnActor<AChessPiece>(ReferredBoard->Rook, FVector(FMath::Rand(), FMath::Rand(), FMath::Rand()), FRotator(FMath::Rand(), FMath::Rand(), FMath::Rand()));
 				RookPromotion->SetColorAndMaterial(PieceColor);
 			}
+			
 			PromotedPiece = RookPromotion;
 			break;
 		case CP::QUEEN:

@@ -31,7 +31,6 @@ void AChess_PlayerController::BeginPlay()
 
 void AChess_PlayerController::ClickOnGrid()
 {
-	// Logica specifica per il click sulla griglia
 	const auto HumanPlayer = Cast<AChess_HumanPlayer>(GetPawn());
 	if (IsValid(HumanPlayer))
 	{
@@ -44,7 +43,6 @@ void AChess_PlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	// Associa la funzione delegata all'azione specificata
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(InputComponent))
 	{
 		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AChess_PlayerController::ClickOnGrid);

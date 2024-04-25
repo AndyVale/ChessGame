@@ -24,17 +24,19 @@ public:
 	AChessboard* ReferredBoard;
 
 	void SetColorAndMaterial(ChessColor c);
-	//GetPieceMoves get all the possible moves of a piece, no regarding at check situations or similar
 
+	//GetPieceMoves get all the possible moves of a piece, no regarding at check situations or similar
 	virtual TArray<TSharedPtr<Chess_Move>>GetPieceMoves() PURE_VIRTUAL(AChessPiece::GetPieceMoves, return TArray<TSharedPtr<Chess_Move>>(););
 
+	//GetPieceLegalMoves get only the legal moves of a piece, much more heavy to compute than GetPieceMoves so it should be used only when needed
 	TArray<TSharedPtr<Chess_Move>> GetPieceLegalMoves();
 
 	virtual float GetPieceValue() PURE_VIRTUAL(AChessPiece::GetPieceValue, return float(););//return piece value
 
 	virtual float GetCorrectedPieceValue();//return piece value corrected on piece position
 
-	virtual float GetPositionValue(FVector2D xy) PURE_VIRTUAL(AChessPiece::GetPositionValue, return float(););//return piece value on the specified xy position
+	//return piece value on the specified xy position (work in progress)
+	virtual float GetPositionValue(FVector2D xy) PURE_VIRTUAL(AChessPiece::GetPositionValue, return float(););
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
 	USceneComponent* Scene;

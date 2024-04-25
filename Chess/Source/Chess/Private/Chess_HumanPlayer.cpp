@@ -11,12 +11,15 @@
 AChess_HumanPlayer::AChess_HumanPlayer()
 {
     // Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
     AutoPossessPlayer = EAutoReceiveInput::Player0;
-    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("DAJE"));
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
     SetRootComponent(Camera);
     GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+    if (!GameInstanceRef)
+    {
+		UE_LOG(LogTemp, Error, TEXT("GameInstanceRef is null in AChess_HumanPlayer"));
+	}
     PlayerColor = WHITE;
     bIsMyTurn = false;
 }
@@ -29,13 +32,17 @@ void AChess_HumanPlayer::BeginPlay()
     {
         gm->OnReplayMove.AddDynamic(this, &AChess_HumanPlayer::ReplayHandler);
     }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("GameMode is null in AChess_HumanPlayer"));
+    }
 }
 
 void AChess_HumanPlayer::ReplayHandler(int32 moveNumber) {
-    bIsMyTurn = MyColor == ChessColor::WHITE ? moveNumber % 2 == 0 : moveNumber % 2 == 1;
-    SelectedPiece = nullptr;
+    bIsMyTurn = MyColor == ChessColor::WHITE ? moveNumber % 2 == 0 : moveNumber % 2 == 1;//if moveNumber is even and I'm white or moveNumber is odd and I'm black is my turn
+    SelectedPiece = nullptr;//remove piece selected
+    ActiveMoves.Empty();//remove active moves
 }
-
 
 // Called every frame
 void AChess_HumanPlayer::Tick(float DeltaTime)
@@ -56,20 +63,17 @@ void AChess_HumanPlayer::OnTurn()
     {
         GameMode->PlayerSwapNotify(true);
     }
-    GameInstanceRef->SetTurnMessage(TEXT("Human Turn"));
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("GameMode is null in AChess_HumanPlayer OnTurn"));
+    }
+    GameInstanceRef->SetTurnMessage(TEXT("Human Turn"));//TODO: add color
 }
 
 void AChess_HumanPlayer::OnWin()
 {
-    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Win!"));
     GameInstanceRef->SetTurnMessage(TEXT("Human Wins!"));
     GameInstanceRef->IncrementScoreHumanPlayer();
-}
-
-void AChess_HumanPlayer::OnLose()
-{
-    //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Lose!"));
-    GameInstanceRef->SetTurnMessage(TEXT("Human Loses!"));
 }
 
 void AChess_HumanPlayer::OnClick()
@@ -77,10 +81,13 @@ void AChess_HumanPlayer::OnClick()
     FHitResult Hit = FHitResult(ForceInit);
     GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
 
-    if (!bIsMyTurn)
+    if (!bIsMyTurn)//if it's not my turn I can't move
+    {
         return;
+    }
 
     AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode());
+
     if (GameMode == nullptr) {
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("GameMode is null in OnClick function"));
         return;
@@ -112,17 +119,23 @@ void AChess_HumanPlayer::OnClick()
         {
             //Move piece (or eat)
             AActor* CurrClicked = nullptr;//using an AActor beacuse no 'special' methods are used here
-            //If clicked obj is a square I have to move, otherwise if obj is a piece eat it, it's handled by MakeASafeMove
+
+            //try to cast to a chess piece, if it fails cast to a square, if it fails return
             Cast<AChessPiece>(Hit.GetActor()) ? CurrClicked = Cast<AChessPiece>(Hit.GetActor()) : CurrClicked = Cast<ASquare>(Hit.GetActor());
             if (!CurrClicked)
             {
-                return;//clicked on background
+                return;//clicked on background or something else
             }
+
+            //get the old location of the piece and the location of the clicked piece/square
             FVector2D oldLoc = Board->GetXYPositionByRelativeLocation(SelectedPiece->GetActorLocation());
             FVector2D newLoc = Board->GetXYPositionByRelativeLocation(CurrClicked->GetActorLocation());
+
+
+            //Move handling:
             TSharedPtr<Chess_Move> move = nullptr;
 
-            if (oldLoc == newLoc)//undo move
+            if (oldLoc == newLoc)//Undo move
             {
                 GameMode->Board->CancelFeasibleSquares();
                 ActiveMoves.Empty();
@@ -130,6 +143,7 @@ void AChess_HumanPlayer::OnClick()
                 return;
             }
 
+            //search for the move in the active moves, if it's not found the move is not valid and the move still nullptr
             for (TSharedPtr<Chess_Move> tmpMove : ActiveMoves)
             {
                 if (tmpMove->From == oldLoc && tmpMove->To == newLoc)
@@ -145,17 +159,20 @@ void AChess_HumanPlayer::OnClick()
                 GameMode->GoBackToActualMove();//Remove history board after the performed move
             }
 
-            if (CurrClicked && move)
-            {//if MakeASafeMove return the move is done, otherwise the piece is deselected
+            if (CurrClicked && move)//if the move is valid
+            {
                 Board->HandledMakeAMove(move, false);
                 GameMode->UpdateLastMove(move);
                 bIsMyTurn = false;
             }
+            //else undo the move
 
+            //in anycase remove the active moves and the selected piece
             GameMode->Board->CancelFeasibleSquares();
             ActiveMoves.Empty();
             SelectedPiece = nullptr;
-            if (!bIsMyTurn)
+
+            if (!bIsMyTurn)//if the move was valid bIsMyTurn is false
             {
                 GameMode->TurnNextPlayer();
             }

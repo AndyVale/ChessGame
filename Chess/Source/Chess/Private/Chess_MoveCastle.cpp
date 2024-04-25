@@ -16,13 +16,13 @@ Chess_MoveCastle::Chess_MoveCastle(FVector2D f, FVector2D t, AChessboard* board,
     Chess_Move(f, t, board)
 {
     MoveClass = MoveType::CASTLE;
-    CapturingPiece = board->GetPieceFromXY(f);
+    //CapturingPiece = board->GetPieceFromXY(f);
     if (CapturingPiece == nullptr)
     {
-        int a = 5;
+        UE_LOG(LogTemp, Error, TEXT("Chess_MoveCastle:No pieces in old position in the constructor"));
     }
-    CapturedPiece = board->GetPieceFromXY(t);
-    MoveValue = MoveValueCalculation();
+   // CapturedPiece = board->GetPieceFromXY(t);
+    MoveValue = MoveValueCalculation();//override superclass value calculation
     bIsQueenSide = isQueenSide;
 }
 
@@ -30,6 +30,7 @@ void Chess_MoveCastle::MakeMove(bool simulate)
 {
     Chess_Move::MakeMove(simulate);
     CastleMove(simulate);
+
     if (!simulate)
     {
         CalculateResult();
@@ -66,18 +67,20 @@ FString Chess_MoveCastle::ToString() const
 void Chess_MoveCastle::CastleMove(bool simulate)
 {
     FVector2D newRookPosition;
-    if (bIsQueenSide)
+    if (bIsQueenSide)//Get the queen side rook and the position in which it will be moved
     {
         FVector2D   BlackLeftRookPosition = FVector2D(0, 0), WhiteLeftRookPosition = FVector2D(0, 7), rookBlackQueenSidePos = FVector2D(3, 0), rookWhiteQueenSidePos = FVector2D(3, 7);
         CastledRook = GetMoveColor() == ChessColor::WHITE ? ReferredBoard->GetPieceFromXY(WhiteLeftRookPosition) : ReferredBoard->GetPieceFromXY(BlackLeftRookPosition);
         newRookPosition = GetMoveColor() == ChessColor::WHITE ? rookWhiteQueenSidePos : rookBlackQueenSidePos;
     }
-    else
+    else//Get the king side rook and the new position
     {
         FVector2D BlackRightRookPosition = FVector2D(7, 0), WhiteRightRookPosition = FVector2D(7, 7), rookBlackKingSidePos = FVector2D(5, 0), rookWhiteKingSidePos = FVector2D(5, 7);
         CastledRook = GetMoveColor() == ChessColor::WHITE ? ReferredBoard->GetPieceFromXY(WhiteRightRookPosition) : ReferredBoard->GetPieceFromXY(BlackRightRookPosition);
         newRookPosition = GetMoveColor() == ChessColor::WHITE ? rookWhiteKingSidePos : rookBlackKingSidePos;
     }
+    
+    //move the rook (king is moved by the Chess_Move superclass)
     ReferredBoard->RemovePiece(CastledRook);
     ReferredBoard->SetPieceFromXY(newRookPosition, CastledRook);
 
@@ -90,16 +93,18 @@ void Chess_MoveCastle::CastleMove(bool simulate)
 void Chess_MoveCastle::CastleMoveRollback(bool simulate)
 {
     FVector2D oldRookPosition;
-    if (bIsQueenSide)
+    if (bIsQueenSide)//Get the queen side rook and the position in which it was before the castle move
     {
         FVector2D BlackLeftRookPosition = FVector2D(0, 0), WhiteLeftRookPosition = FVector2D(0, 7), rookBlackQueenSidePos = FVector2D(3, 0), rookWhiteQueenSidePos = FVector2D(3, 7);
         oldRookPosition = GetMoveColor() == ChessColor::WHITE ? WhiteLeftRookPosition : BlackLeftRookPosition;
     }
-    else
+    else//Get the king side rook and the position in which it was before the castle move
     {
         FVector2D BlackRightRookPosition = FVector2D(7, 0), WhiteRightRookPosition = FVector2D(7, 7), rookBlackKingSidePos = FVector2D(5, 0), rookWhiteKingSidePos = FVector2D(5, 7);
         oldRookPosition = GetMoveColor() == ChessColor::WHITE ? WhiteRightRookPosition : BlackRightRookPosition;
     }
+
+    //move the rook back to its original position (king is moved back by the Chess_Move superclass)
     ReferredBoard->RemovePiece(CastledRook);
     ReferredBoard->SetPieceFromXY(oldRookPosition, CastledRook);
 

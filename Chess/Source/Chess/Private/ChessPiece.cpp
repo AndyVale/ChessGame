@@ -7,12 +7,11 @@
 AChessPiece::AChessPiece()
 {
     // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = false;
     Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
     ChessPieceMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
-    ChessPieceMesh->SetWorldScale3D(FVector(0.60, 0.60, 0.001));
+    ChessPieceMesh->SetWorldScale3D(FVector(0.60, 0.60, 0.001));//scaling the mesh so in the blueprints i have not to scale it
     PiecePosition = FVector2D(-1, -1);//initializing pieceposition to a non valid xy
-    //ChessPieceMesh->SetRelativeLocation(FVector(-10, -20, 0));
     SetRootComponent(Scene);
     ChessPieceMesh->SetupAttachment(Scene);
 }
@@ -59,13 +58,14 @@ void AChessPiece::GetFeasibleDiagonals(AChessPiece* piece, TArray<TSharedPtr<Che
         FVector2D(1, -1), //down right
         FVector2D(-1, -1) //down left
     };
+
     for (const FVector2D& move : bishopDirections)
     {
         int i = x + move.X;
         int j = y + move.Y;
         bool foundPiece = false;
 
-        while (!foundPiece && i >= 0 && i < max && j >= 0 && j < max)
+        while (!foundPiece && i >= 0 && i < max && j >= 0 && j < max)//until we find a piece or we reach the end of the board
         {
             if (Board->GetPieceFromXY(FVector2D(i, j)))
             {
@@ -102,7 +102,7 @@ void AChessPiece::GetFeasibleCross(AChessPiece* piece, TArray <TSharedPtr<Chess_
         int j = y + move.Y;
         bool foundPiece = false;
 
-        while (!foundPiece && i >= 0 && i < max && j >= 0 && j < max)
+        while (!foundPiece && i >= 0 && i < max && j >= 0 && j < max)//until we find a piece or we reach the end of the board
         {
             if (Board->GetPieceFromXY(FVector2D(i, j)))
             {
@@ -120,6 +120,7 @@ void AChessPiece::GetFeasibleCross(AChessPiece* piece, TArray <TSharedPtr<Chess_
 
 }
 
+//(work in progress)
 float AChessPiece::GetCorrectedPieceValue()
 {
     float pv = GetPieceValue();
@@ -129,12 +130,12 @@ float AChessPiece::GetCorrectedPieceValue()
 
 TArray<TSharedPtr<Chess_Move>> AChessPiece::GetPieceLegalMoves()
 {
-    TArray<TSharedPtr<Chess_Move>> feasibleMoves = this->GetPieceMoves();
+    TArray<TSharedPtr<Chess_Move>> feasibleMoves = this->GetPieceMoves();//get all the moves
     TArray<TSharedPtr<Chess_Move>> legalMoves = TArray<TSharedPtr<Chess_Move>>();
 
     for (TSharedPtr<Chess_Move> move : feasibleMoves)
     {
-        if (move->IsLegal())
+        if (move->IsLegal())//check if the move is legal
         {
             legalMoves.Add(move);
         }

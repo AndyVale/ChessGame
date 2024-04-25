@@ -9,8 +9,12 @@ int32 nodeVisited = 0;
 AChess_MinimaxPlayer::AChess_MinimaxPlayer()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (!GameInstanceRef)
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameInstanceRef is null in AChess_MinimaxPlayer"));
+	}
 	bIsMyTurn = false;
 	PlayerColor = ChessColor::BLACK;
 }
@@ -21,7 +25,11 @@ void AChess_MinimaxPlayer::BeginPlay()
 	Super::BeginPlay();
 	if (GameInstanceRef)
 	{
-		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_MinimaxPlayer::ResetHandler);//TODO: this is a workaround, search for a better solution
+		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChess_MinimaxPlayer::ResetHandler);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameInstanceRef is null in AChess_MinimaxPlayer at beginplay"));
 	}
 }
 
@@ -29,7 +37,6 @@ void AChess_MinimaxPlayer::BeginPlay()
 void AChess_MinimaxPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 // Called to bind functionality to input
@@ -41,49 +48,68 @@ void AChess_MinimaxPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 void AChess_MinimaxPlayer::OnTurn()
 {
 	FTimerHandle TimerHandle;
-	GameInstanceRef->SetTurnMessage(TEXT("Minimax player turn!"));
+	if (GameInstanceRef)
+	{
+		GameInstanceRef->SetTurnMessage(TEXT("Minimax player turn!"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameInstanceRef is null in AChess_MinimaxPlayer onTurn"));
+	}
+
 	if (AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode()))
 	{
 		GameMode->PlayerSwapNotify(false);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameMode is null in AChess_MinimaxPlayer onTurn"));
+	}
+
 	bIsMyTurn = true;
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&] { AChess_MinimaxPlayer::MakeMinimaxMove(); }, 1, false);
 }
 
 void AChess_MinimaxPlayer::OnWin()
 {
-	GameInstanceRef->SetTurnMessage(TEXT("Minimax player Wins!"));
+	GameInstanceRef->SetTurnMessage(TEXT("Minimax player Wins!"));//TODO: add color
 	GameInstanceRef->IncrementScoreAIPlayer();
 }
 
-void AChess_MinimaxPlayer::OnLose()
-{
-}
-int32 visitedNode;
+int32 visitedNode;//debug purposes
 
 void AChess_MinimaxPlayer::MakeMinimaxMove()
 {
-//	if(GetWorld())
 	if (AChess_GameMode* GM = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode())) {
-		auto start = std::chrono::high_resolution_clock::now();
-		TSharedPtr<Chess_Move> miniMaxMove = FindBestMove(GM->Board);
+
+		auto start = std::chrono::high_resolution_clock::now();//debug purposes
+
+		TSharedPtr<Chess_Move> miniMaxMove = FindBestMove(GM->Board);//Find the best move
+
+		//debug purposes
 		auto end = std::chrono::high_resolution_clock::now();
 		auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 		int32 a = visitedNode;
 		double m = (a * 1.0) / duration;
 		UE_LOG(LogTemp, Error, TEXT("%d,       %lld,"), a, duration, m);
+		//end debug purposes
 
-		if (miniMaxMove && bIsMyTurn)
+		if (miniMaxMove && bIsMyTurn)//if the move is valid and is still my turn (no reset occurred)
 		{
 			GM->Board->HandledMakeAMove(miniMaxMove, false);
 			GM->UpdateLastMove(miniMaxMove);//notify the HUD of the move
+
 			bIsMyTurn = false;
 			GM->TurnNextPlayer();
 		}
 		else
 		{
-			//reset occurred
+			//reset occurred or move is not valid
 		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameMode is null in AChess_MinimaxPlayer MakeMinimaxMove"));
 	}
 }
 TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
@@ -94,11 +120,15 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 	TSharedPtr<Chess_Move> lastBestMove = nullptr;
 	TArray<AChessPiece*>  piecesMap;
 	TArray<TSharedPtr<Chess_Move>> moves = TArray<TSharedPtr<Chess_Move>>();
-	visitedNode = 0;
+
+	visitedNode = 0;//debug purposes
+
 	if (PlayerColor == ChessColor::BLACK)//play as Minimizer
 	{
 		bestScore = +20000.0f;
 		piecesMap = board->GetPieces(BLACK);
+
+		//get all legal moves
 		for (auto& piece : piecesMap)
 		{
 			moves.Append(piece->GetPieceLegalMoves());
@@ -114,13 +144,13 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 			board->HandledMakeAMove(move, true);
 			actualScore = AlfaBetaMinimax(-20000.0f, 20000.0f, board, 3, true);
 			board->HandledRollbackAMove(move, true);
-			//move->RollbackMove(true);
+
 			if (actualScore < bestScore)
 			{
 				bestMoves.Empty();
-				//bestMove = MakeShareable<Chess_Move>(new Chess_Move(move));//new Chess_Move(move);
 				bestScore = actualScore;
 			}
+
 			if (actualScore == bestScore)
 			{
 				lastBestMove = move;
@@ -152,14 +182,19 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 		for (TSharedPtr<Chess_Move> move : moves)
 		{
 			board->HandledMakeAMove(move, true);
-			//move->MakeMove(true);
 			actualScore = AlfaBetaMinimax(-20000.0f, 20000.0f, board, 2, false);
 			board->HandledRollbackAMove(move, true);
-			//move->RollbackMove(true);
-			if (actualScore >= bestScore)
+
+			if (actualScore > bestScore)
 			{
-				lastBestMove = move;//new Chess_Move(move);
+				bestMoves.Empty();
 				bestScore = actualScore;
+			}
+
+			if (actualScore == bestScore)
+			{
+				lastBestMove = move;
+				bestMoves.Add(lastBestMove);
 			}
 		}
 
@@ -199,10 +234,7 @@ float AChess_MinimaxPlayer::EvaluatePieces(AChessboard* board, bool isMax)
 	//Development -> Are Knights and Bishops in the spawn squares?
 	//Pawn structure
 	//float pv = board->PositionValue;//white material - black material
-	//if (pv1 != pv)
-	//{
-	//	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Ops"));
-	//}
+
 	return pv;//Black is minimixer, White is maximixer
 }
 
@@ -213,6 +245,7 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 	TArray<AChessPiece*> pieces;
 	TArray<TSharedPtr<Chess_Move>> moves = TArray<TSharedPtr<Chess_Move>>();
 	bool stall = true;//no legal moves -> stall
+
 	//is terminal:
 	if (value == -10000.0f)//MAX under checkmate
 	{
@@ -234,6 +267,8 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 	{
 		value = -20000.0f;//v <- -inf
 		pieces = board->GetPieces(WHITE);
+
+		//get all moves (legal and not legal for performance reasons, the legality test is make before do the move)
 		for (auto& piece : pieces)
 		{
 			moves.Append(piece->GetPieceMoves());
@@ -244,9 +279,10 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 			return 0;//TODO:change this to a stall value (high value if loosing, low value if winning)
 		}
 
-		moves.Sort([](const TSharedPtr<Chess_Move>& a, const  TSharedPtr<Chess_Move>& b) {//order in descending order -> best move for white first
+		moves.Sort([](const TSharedPtr<Chess_Move>& a, const  TSharedPtr<Chess_Move>& b) {//order in descending order -> best move for white first to have a better pruning
 			return a->MoveValue > b->MoveValue;
 			});
+
 		for (TSharedPtr<Chess_Move> move : moves)
 		{
 			visitedNode++;
@@ -256,7 +292,7 @@ float AChess_MinimaxPlayer::AlfaBetaMinimax(float alfa, float beta, AChessboard*
 				board->HandledMakeAMove(move, true);
 				value = FMath::Max(value, AlfaBetaMinimax(alfa, beta, board, depth - 1, false));
 				board->HandledRollbackAMove(move, true);
-				//move->RollbackMove(true);
+
 				if (value >= beta)//Minimizer wont select this path, so prune
 				{
 					return value;

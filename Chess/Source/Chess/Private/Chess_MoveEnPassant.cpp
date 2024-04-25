@@ -16,14 +16,14 @@ Chess_MoveEnPassant::Chess_MoveEnPassant(FVector2D f, FVector2D t, AChessboard* 
     Chess_Move(f, t, board)
 {
     MoveClass = MoveType::EN_PASSANT;
-    CapturingPiece = board->GetPieceFromXY(f);
+   // CapturingPiece = board->GetPieceFromXY(f);
     if (CapturingPiece == nullptr)
     {
-        int a = 5;
+        UE_LOG(LogTemp, Error, TEXT("Chess_MoveEnPassant:No pieces in old position in the constructor"));
     }
-    CapturedPiece = board->GetPieceFromXY(t);
-    EnPassantCapturedPiece = board->GetPieceFromXY(enPassantCapturePosition);
-    MoveValue = MoveValueCalculation();
+  //  CapturedPiece = board->GetPieceFromXY(t);
+    EnPassantCapturedPiece = board->GetPieceFromXY(enPassantCapturePosition);//get the piece to capture from the en passant position (the position is saved in chessboard class)
+    MoveValue = MoveValueCalculation();//override superclass value calculation
 }
 
 void Chess_MoveEnPassant::MakeMove(bool simulate)
@@ -51,7 +51,7 @@ void Chess_MoveEnPassant::EnPassantCapture(bool simulate)
     //capture piece:
     if (EnPassantCapturedPiece)
     {
-        ReferredBoard->RemovePiece(EnPassantCapturedPiece);
+        ReferredBoard->RemovePiece(EnPassantCapturedPiece);//remove the piece from the board
         if (!simulate)
         {
             if (EnPassantCapturedPiece->PieceColor == BLACK)//TODO:RIARRANGIA
@@ -69,7 +69,7 @@ void Chess_MoveEnPassant::EnPassantCaptureRollback(bool simulate)
     if (EnPassantCapturedPiece)
     {
         FVector2D EnPassantCapturedPiecePosition = FVector2D(To.X, From.Y);
-        ReferredBoard->SetPieceFromXY(EnPassantCapturedPiecePosition, EnPassantCapturedPiece);
+        ReferredBoard->SetPieceFromXY(EnPassantCapturedPiecePosition, EnPassantCapturedPiece);//restore the piece to the board
         if (!simulate)
         {
             EnPassantCapturedPiece->SetActorHiddenInGame(false);

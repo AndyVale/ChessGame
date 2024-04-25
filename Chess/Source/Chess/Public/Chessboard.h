@@ -50,7 +50,7 @@ public:
 	UFUNCTION()
 	void ResetBoard();
 
-	bool IsOnReplay();//return true if the board is on "replay-mode" (in this mode the player cannot do any move)
+	//bool IsOnReplay();//return true if the board is on "replay-mode" (in this mode the player cannot do any move)
 
 	//methods for data structure abstraction:
 	FVector2D* GetXYFromPiece(AChessPiece* p);

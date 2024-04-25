@@ -21,17 +21,16 @@ class CHESS_API UChess_StoryBoardEntry : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 
-	//FOnClick OnCLick;
-	//UChess_UserWidget* HudRef;
-
 	UFUNCTION()
+	//method to handle white button click
 	void WhiteButtonClickHandler();
 
 	UFUNCTION()
+	//method to handle black button click
 	void BlackButtonClickHandler();
 
+	//variable to store if a white (black) move is already done to bind events to buttons accordingly and avoid multiple moves in a single turn
 	bool bWhiteMoveDone = false;
-
 	bool bBlackMoveDone = false;
 
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
@@ -49,15 +48,15 @@ public:
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 	UTextBlock* BlackMoveText;
 
+	//method to set the text of the turn number (is the number of the turn shown at left of each row)
 	void SetTurnNumberText(FString t);
-
+	//method to set the text of the white move (in the storyboard, the move of the white player is shown at the right of the turn number)
 	void SetWhiteMoveText(FString t);
-
+	//method to set the text of the black move (in the storyboard, the move of the black player is shown at the right of the white move)
 	void SetBlackMoveText(FString t);
-
-	void SetAllButtons(bool s);
+	//wrapper to call both setisenabled methods on the two buttons
+	void SetIsEnabledForBothButtons(bool s);
 private:
+	//Aux method to handle button click events
 	void ButtonClickHandler(bool isWhiteButton);
-	//void SetGoBackButton();
-
 };

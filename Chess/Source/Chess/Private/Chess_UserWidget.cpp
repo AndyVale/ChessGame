@@ -10,6 +10,10 @@ void UChess_UserWidget::NativeConstruct()
     TurnsHistory = TArray<UChess_StoryBoardEntry*>();
     GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
     GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode());
+    if (!GameMode)
+    {
+		UE_LOG(LogTemp, Error, TEXT("GameMode is null in UChess_UserWidget"));
+	}
     //Binding receiver:
     if (GameInstanceRef)
     {
@@ -27,16 +31,30 @@ void UChess_UserWidget::NativeConstruct()
             GameMode->OnTurnSwap.BindUObject(this, &UChess_UserWidget::SetIsEnabledButtons);
         }
     }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("GameInstanceRef is null"));
+    }
 
     //Binding Events:
     if (ResetButton)
     {
         ResetButton->OnClicked.AddDynamic(this, &UChess_UserWidget::ResetOnClick);
     }
+    else
+    {
+		UE_LOG(LogTemp, Error, TEXT("ResetButton is null"));
+	}
+
     if (RematchButton)
     {
         RematchButton->OnClicked.AddDynamic(this, &UChess_UserWidget::RematchOnClick);
     }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("RematchButton is null"));
+    }
+
     if (StoryBoardScrollBox)
     {
         if (GameMode)
@@ -44,8 +62,17 @@ void UChess_UserWidget::NativeConstruct()
             GameMode->OnMoveUpdate.BindUObject(this, &UChess_UserWidget::MoveHandler);
         }
     }
+    else
+    {
+		UE_LOG(LogTemp, Error, TEXT("StoryBoardScrollBox is null"));
+	}
+
     if (PawnPromotionWidget) {
         PawnPromotionWidget->SetVisibility(ESlateVisibility::Hidden);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("PawnPromotionWidget is null"));
     }
 
     ScoreUpdateHandler();//Show points
@@ -189,6 +216,6 @@ void UChess_UserWidget::SetIsEnabledButtons(bool s)
     ChangeOpponentButton->SetIsEnabled(s);
     for (UChess_StoryBoardEntry* entry : TurnsHistory)
     {
-        entry->SetAllButtons(s);
+        entry->SetIsEnabledForBothButtons(s);
     }
 }

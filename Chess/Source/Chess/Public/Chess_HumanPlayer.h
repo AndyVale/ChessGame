@@ -30,7 +30,6 @@ public:
 	//Overrides from IChess_PlayerInterface
 	virtual void OnTurn() override;
 	virtual void OnWin() override;
-	virtual void OnLose() override;
 
 	UFUNCTION()
 	//Method to handle the click event

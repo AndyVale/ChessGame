@@ -14,7 +14,7 @@ void UChess_StoryBoardEntry::NativeConstruct()
 void UChess_StoryBoardEntry::WhiteButtonClickHandler()
 {
 	bool isWhiteButton = true;
-	ButtonClickHandler(isWhiteButton);
+	ButtonClickHandler(isWhiteButton);//call generic button click handler
 }
 
 void UChess_StoryBoardEntry::BlackButtonClickHandler()
@@ -33,6 +33,10 @@ void UChess_StoryBoardEntry::ButtonClickHandler(bool isWhiteButton)
 	if (AChess_GameMode* GameModeRef = Cast<AChess_GameMode>(UGameplayStatics::GetGameMode(GetWorld()))) {
 		GameModeRef->ReplayMove(moveNumber);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameModeRef is null in UChess_StoryBoardEntry button click handler"));
+	}
 }
 
 void UChess_StoryBoardEntry::SetTurnNumberText(FString t)
@@ -43,7 +47,7 @@ void UChess_StoryBoardEntry::SetTurnNumberText(FString t)
 	}
 	else
 	{
-
+		UE_LOG(LogTemp, Error, TEXT("TurnNumberText is null in UChess_StoryBoardEntry"));
 	}
 }
 
@@ -56,6 +60,7 @@ void UChess_StoryBoardEntry::SetWhiteMoveText(FString t)
 	}
 	else
 	{
+		UE_LOG(LogTemp, Error, TEXT("WhiteMoveText is null in UChess_StoryBoardEntry"));
 	}
 }
 
@@ -67,12 +72,20 @@ void UChess_StoryBoardEntry::SetBlackMoveText(FString t)
 	}
 	else
 	{
+		UE_LOG(LogTemp, Error, TEXT("BlackMoveText is null in UChess_StoryBoardEntry"));
 	}
 }
 
-void UChess_StoryBoardEntry::SetAllButtons(bool s)
+void UChess_StoryBoardEntry::SetIsEnabledForBothButtons(bool s)
 {
-	WhiteBackButton->SetIsEnabled(s);
-	BlackBackButton->SetIsEnabled(s);
+	if (WhiteBackButton && BlackBackButton)
+	{
+		WhiteBackButton->SetIsEnabled(s);
+		BlackBackButton->SetIsEnabled(s);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("At least one of the buttons is null in UChess_StoryBoardEntry"));
+	}
 }
 

@@ -16,13 +16,11 @@ Chess_MovePawnPromotion::Chess_MovePawnPromotion(FVector2D f, FVector2D t, AChes
     Chess_Move(f, t, board)
 {
     MoveClass = MoveType::PAWN_PROMOTION;
-    FVector position = ReferredBoard->GetRelativeLocationByXYPosition(To.X, To.Y);
-    FRotator rotation = FRotator(0, 0, 0);
-    ChessColor pColor = GetMoveColor();
-    lastSelectedPiece = selectedPiece;
-    //PawnPromotionAusRef = ReferredBoard->GetWorld()->SpawnActor<AChessPiece>(selectedPiece, position, rotation);
-    //PawnPromotionAusRef->SetColorAndMaterial(pColor);
-    //PawnPromotionAusRef->SetActorHiddenInGame(true);
+    if (CapturingPiece == nullptr)
+    {
+		UE_LOG(LogTemp, Error, TEXT("Chess_MovePawnPromotion:No pieces in old position in the constructor"));
+	}
+    lastSelectedPiece = selectedPiece;//save the selected piece for the promotion
 }
 
 void Chess_MovePawnPromotion::MakeMove(bool simulate)
@@ -61,6 +59,7 @@ FString Chess_MovePawnPromotion::ToString() const
     AlgebricNotation += Columns[To.X];
     AlgebricNotation += Rows[To.Y];
 
+    //add the piece in which the pawn is promoted
     if (ACP_Pawn* pawn = Cast<ACP_Pawn>(CapturingPiece))
     {
 		AlgebricNotation += "=" + GetPieceLetter(pawn->PromotedPiece);
@@ -81,15 +80,14 @@ FString Chess_MovePawnPromotion::ToString() const
 }
 
 //--------------------- PawnPromotion methods:
-//PROMOZIONE NON FUNZIONA ---> HARD REFACTORING NEEDED (aggiungere metodi nella classe del pedone per la promozione)
 void Chess_MovePawnPromotion::PromotePawn(bool simulate, CP selectedPiece)
 {
-    if (selectedPiece != CP::PAWN && selectedPiece != CP::KING) {
+    if (selectedPiece != CP::PAWN && selectedPiece != CP::KING) {//if a new piece is selected for the promotion update the value
         lastSelectedPiece = selectedPiece;
     }
     if (ACP_Pawn* pawn = Cast<ACP_Pawn>(CapturingPiece))
     {
-		pawn->PromoteIn(lastSelectedPiece);
+		pawn->PromoteIn(lastSelectedPiece);//promote the pawn to the selected piece
 	}
 }
 
@@ -98,6 +96,6 @@ void Chess_MovePawnPromotion::PromotePawnRollback(bool simulate)
 {
     if (ACP_Pawn* pawn = Cast<ACP_Pawn>(CapturingPiece))
     {
-        pawn->PromoteIn(CP::PAWN);
+        pawn->PromoteIn(CP::PAWN);//downgrade the promoted piece to a pawn, no matter what it was
     }
 }

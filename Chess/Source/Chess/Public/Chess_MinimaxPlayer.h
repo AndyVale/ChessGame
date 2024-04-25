@@ -33,7 +33,6 @@ public:
 	//Overrides from IChess_PlayerInterface
 	virtual void OnTurn() override;
 	virtual void OnWin() override;
-	virtual void OnLose() override;
 
 	//Wrapper function to call the minimax algorithm
 	void MakeMinimaxMove();

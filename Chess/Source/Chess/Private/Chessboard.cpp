@@ -14,10 +14,11 @@
 // Sets default values
 AChessboard::AChessboard()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = false;
+
+	//initialize variables to default values
 	StackMoves = TArray<TSharedPtr<Chess_Move>>();
 	StackUndoMoves = TArray<TSharedPtr<Chess_Move>>();
-	PrimaryActorTick.bCanEverTick = false;
 	//PositionValue = 0;
 	WhiteMaterial = 0;
 	BlackMaterial = 0;
@@ -35,14 +36,25 @@ AChessboard::AChessboard()
 void AChessboard::BeginPlay()
 {
 	Super::BeginPlay();
-
+	//binding events to delegates:
 	if (UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()))) {
 		GameInstanceRef->OnResetEvent.AddDynamic(this, &AChessboard::ResetBoard);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameInstanceRef is null in Chessboard"));
+	}
+
 	if (AChess_GameMode* GameModeRef = Cast<AChess_GameMode>(UGameplayStatics::GetGameMode(GetWorld()))) {
 		GameModeRef->OnReplayMove.AddDynamic(this, &AChessboard::ReplayMove);
 		GameModeRef->OnTurnGoBack.AddUObject(this, &AChessboard::RemoveUndoneMoves);
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("GameModeRef is null in Chessboard"));
+	}
+	
+	//Spawn the chessboard
 	if (SquareClass != nullptr)
 	{
 		GenerateField();
@@ -55,10 +67,12 @@ void AChessboard::BeginPlay()
 
 void AChessboard::ReplayMove(int32 moveNumber)
 {
-	PushAndPopUntilMove(moveNumber);
-	RestoreBoardColors();
+	PushAndPopUntilMove(moveNumber);//replay back
+	RestoreBoardColors();//restore board colors to default white-black pattern
+
 	if (!StackMoves.IsEmpty())
 	{
+		//highlight squares of the move in replay (and the king in check if there is)
 		TSharedPtr<Chess_Move> moveInReplay = StackMoves.Top();
 		ASquare* f = GetSquareFromXY(moveInReplay->From);
 		ASquare* t = GetSquareFromXY(moveInReplay->To);
@@ -101,6 +115,7 @@ void AChessboard::ResetBoard()
 	TArray<AActor*> ChessPieces, Squares;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AChessPiece::StaticClass(), ChessPieces);
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASquare::StaticClass(), Squares);
+	//Destroy all pieces and squares
 	for (AActor* Actor : ChessPieces)
 	{
 		Actor->Destroy();
@@ -110,6 +125,7 @@ void AChessboard::ResetBoard()
 		Actor->Destroy();
 	}
 
+	//reset variables:
 	//	PositionValue = 0;
 	WhiteMaterial = 0;
 	BlackMaterial = 0;
@@ -124,12 +140,9 @@ void AChessboard::ResetBoard()
 	StackUndoMoves.Empty();
 	StackMoves.Empty();
 	XY_Square.Empty();
-	GenerateField();
-}
 
-bool AChessboard::IsOnReplay()
-{
-	return StackUndoMoves.Num() != 0;
+	//recreate the board:
+	GenerateField();
 }
 
 FVector2D* AChessboard::GetXYFromPiece(AChessPiece* p)
@@ -139,41 +152,6 @@ FVector2D* AChessboard::GetXYFromPiece(AChessPiece* p)
 		return &p->PiecePosition;
 	}
 	return nullptr;
-	/*FVector2D xy;
-	if (p)
-	{
-		switch (p->PieceColor)
-		{
-		case WHITE:
-			if (WhitePieces.Find(p))
-			{
-
-				xy = (*WhitePieces.Find(p))->PiecePosition;
-				if (xy != p->PiecePosition)
-				{
-					bool b = true;
-				}
-				return //WhitePieces.Find(p);
-			}
-			break;
-		case BLACK:
-			if (BlackPieces.Find(p))
-			{
-
-				xy = *BlackPieces.Find(p);
-				if (xy != p->PiecePosition)
-				{
-					bool b = true;
-				}
-				return BlackPieces.Find(p);
-			}
-			break;
-		case NAC:
-			break;
-		}
-	}
-	UE_LOG(LogTemp, Error, TEXT("GetXYFormPiece: Piece not found"));
-	return nullptr;*/
 }
 
 AChessPiece* AChessboard::GetPieceFromXY(FVector2D xy)
@@ -250,16 +228,16 @@ TSharedPtr<Chess_Move> AChessboard::GetMoveShowedOnBoard()
 {
 	if (!StackMoves.IsEmpty())
 	{
-		return StackMoves.Top();
+		return StackMoves.Top();//return the last move
 	}
 	return nullptr;
 }
 
-TArray<TSharedPtr<Chess_Move>> AChessboard::GetMovesAndShowHints(AChessPiece* Piece, bool showMoves)
+TArray<TSharedPtr<Chess_Move>> AChessboard::GetMovesAndShowHints(AChessPiece* Piece, bool showMoves)//TODO: showMoves is not used
 {
 	TArray<FVector2D> xys = TArray<FVector2D>();
 	TArray<TSharedPtr<Chess_Move>> moves = Piece->GetPieceLegalMoves();
-	for (TSharedPtr<Chess_Move> move : moves)
+	for (TSharedPtr<Chess_Move> move : moves)//show the possible moves on the board setting the squares as selected
 	{
 		FVector2D xy = move->To;
 		ASquare* square = GetSquareFromXY(xy);
@@ -310,7 +288,7 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	FRotator Rotation = FRotator(0, 0, 0);
 	AChessPiece* Piece = nullptr;
 
-	//spawn piece:
+	//spawn pieces:
 
 	if (InY == 1 || InY == 6)
 	{
@@ -368,7 +346,9 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	//	}
 	//}
 	return Piece;
-}/*
+}
+
+/*
 //TEST CHESSBOARD:
 AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const int32 InY)
 {
@@ -423,6 +403,7 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	return Piece;
 }
 */
+
 void AChessboard::GenerateField()
 {
 	const float TileScale = SquareSize / 100;
@@ -445,6 +426,8 @@ void AChessboard::GenerateField()
 				//Pce->PieceColor == WHITE ? WhitePieces.Add(Pce) : BlackPieces.Add(Pce);
 				SetPieceFromXY(FVector2D(x, y), Pce);
 			}
+
+
 			//Chessboard indications:
 			if (y == 7 || x == 0)
 			{
@@ -490,7 +473,7 @@ void AChessboard::GenerateField()
 
 void AChessboard::RemovePiece(AChessPiece* p)
 {
-	if (p)//TODO: Quando gli passo la regina del pezzo promosso non trova nulla.
+	if (p)
 	{
 		FVector2D* xy = GetXYFromPiece(p);
 		if (xy && GetSquareFromXY(*xy))
@@ -544,17 +527,18 @@ FVector2D AChessboard::GetXYPositionByRelativeLocation(const FVector& Location) 
 
 TSharedPtr<Chess_Move> AChessboard::PromoteLastMove(CP ChessPieceEnum)
 {
-	if (StackMoves.Top() && StackMoves.Top()->MoveClass == MoveType::PAWN_PROMOTION) {
-		if (Chess_MovePawnPromotion* pawnPromotionMove = static_cast<Chess_MovePawnPromotion*>(StackMoves.Top().Get())) {
-			pawnPromotionMove->PromotePawn(false, ChessPieceEnum);
+	if (StackMoves.Top() && StackMoves.Top()->MoveClass == MoveType::PAWN_PROMOTION) {//if the last move is a pawn promotion
+		if (Chess_MovePawnPromotion* pawnPromotionMove = static_cast<Chess_MovePawnPromotion*>(StackMoves.Top().Get())) {//get it as a pawn promotion move
+			pawnPromotionMove->PromotePawn(false, ChessPieceEnum);//promote the pawn
+
 			RestoreBoardColors();
 
 			pawnPromotionMove->RollbackMove(false);//force the rollback of the move to avoid fake check
-			pawnPromotionMove->MakeMove(false);
+			pawnPromotionMove->MakeMove(false);//force the move to avoid fake check
 
 			if (AChess_GameMode* GameModeRef = Cast<AChess_GameMode>(UGameplayStatics::GetGameMode(GetWorld())))
 			{
-				GameModeRef->UpdateLastMove(StackMoves.Top());
+				GameModeRef->UpdateLastMove(StackMoves.Top());//notify the HUD of the move change
 			}
 		}
 	}
@@ -598,9 +582,6 @@ bool AChessboard::CheckControl(ChessColor C)
 			}
 		}
 	}
-
-	//int tmp = (*KingPosition)[0] + (*KingPosition)[1];//tmp variable for casting purpose
-	//GetSquareFromXY(*KingPosition)->SetSquareColor((tmp % 2) == 0);
 	return false;
 }
 
@@ -654,7 +635,7 @@ bool AChessboard::StallControl(ChessColor C)
 	}
 	ActualOwnedPieces = C == WHITE ? WhitePieces : BlackPieces;
 
-	if (!StackMoves.IsEmpty() && StackMoves.Top()->PlayerOnCheck != ChessColor::NAC)
+	if (!StackMoves.IsEmpty() && StackMoves.Top()->PlayerOnCheck != ChessColor::NAC)//TODO:to this in chess_move
 	{
 		return false;//not a stall but a check/Checkmate
 	}
@@ -676,6 +657,7 @@ FVector2D* AChessboard::GetKingPosition(ChessColor C)
 	case BLACK:
 		return GetXYFromPiece(BlackKing);
 	}
+	UE_LOG(LogTemp, Error, TEXT("GetKingPosition: Unexpected ChessColor NAC as input parameter"));
 	return nullptr;
 }
 
