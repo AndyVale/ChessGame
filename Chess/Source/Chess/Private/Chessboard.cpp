@@ -357,19 +357,23 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	FRotator Rotation = FRotator(0, 0, 0);
 	AChessPiece* Piece = nullptr;
 
-	if (InX == 0 && InY == 6) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
+	if (InX == 5 && InY == 1) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, Rotation);
 		Piece->SetColorAndMaterial(WHITE);
 	}
-	if (InX == 0 && InY == 5) {
-		Piece = GetWorld()->SpawnActor<AChessPiece>(Pawn, Location, Rotation);
-		Piece->SetColorAndMaterial(BLACK);
+	if (InX == 5 && InY == 6) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Queen, Location, Rotation);
+		Piece->SetColorAndMaterial(WHITE);
 	}
 
-	if (InX == 3 && InY == 5) {
+	if (InX == 6 && InY == 2) {
 		Piece = GetWorld()->SpawnActor<AChessPiece>(King, Location, Rotation);
 		Piece->SetColorAndMaterial(BLACK);
 		BlackKing = Piece;
+	}
+	if (InX ==7 && InY == 3) {
+		Piece = GetWorld()->SpawnActor<AChessPiece>(Bishop, Location, Rotation);
+		Piece->SetColorAndMaterial(WHITE);
 	}
 
 	if (InX == 1 && InY == 7) {
@@ -403,7 +407,6 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 	return Piece;
 }
 */
-
 void AChessboard::GenerateField()
 {
 	const float TileScale = SquareSize / 100;
@@ -682,7 +685,7 @@ void AChessboard::HandledMakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 		//OnMove.Broadcast(move->ToString());
 
 		if (move->MoveClass == MoveType::PAWN_PROMOTION && StackUndoMoves.IsEmpty()) {//if is a promotion and is not a replay -> spawn widget 
-			UE_LOG(LogTemp, Error, TEXT("Spawn promotion HUD"));
+			UE_LOG(LogTemp, Display, TEXT("Spawn promotion HUD"));
 			if (AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode())) {
 				GameMode->ShowPromotionWidget(move->GetMoveColor());
 			}
@@ -690,7 +693,7 @@ void AChessboard::HandledMakeAMove(TSharedPtr<Chess_Move> move, bool simulate)
 	}
 	if (bl != bCastleBlackLong || bs != bCastleBlackShort || ws != bCastleWhiteShort || wl != bCastleWhiteLong)//debug porpouse
 	{
-		UE_LOG(LogTemp, Error, TEXT("Change detected"));
+		UE_LOG(LogTemp, Display, TEXT("HandledMakeAMove: Castle variables changed"));
 	}
 
 	//Enpassant handling:

@@ -7,7 +7,7 @@
 
 TArray<TSharedPtr<Chess_Move>> ACP_Pawn::GetPieceMoves()
 {
-	if (bIsPromoted)//if the pawn is promoted, return the promoted piece moves
+	if (PromotedPiece)//if the pawn is promoted, return the promoted piece moves
 	{
 		PromotedPiece->ReferredBoard = ReferredBoard;
 		PromotedPiece->PiecePosition = PiecePosition;
@@ -166,10 +166,8 @@ void ACP_Pawn::PromoteIn(CP promotedPiece)
 			break;
 		default:
 			PromotedPiece = nullptr;
-			bIsPromoted = false;
 			this->SetColorAndMaterial(PieceColor);
 			return;
 	}
-	bIsPromoted = true;
 	this->ChessPieceMesh->SetMaterial(0, PromotedPiece->ChessPieceMesh->GetMaterial(0));
 }

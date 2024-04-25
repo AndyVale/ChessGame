@@ -12,14 +12,11 @@
 #include "Components/TextBlock.h"
 #include "Components/ScrollBox.h"
 #include "Chess_PawnPromotionWidget.h"
-//#include "Components/ListView.h"
 #include "Chess_UserWidget.generated.h"
 
 /**
- *
+ * Class that represents the main UI of the game and handles the interaction between the game and the UI
  */
-
-
 UCLASS()
 class CHESS_API UChess_UserWidget : public UUserWidget
 {
@@ -38,6 +35,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UButton* ChangeOpponentButton;//Event onclick handled in blueprint
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
+	UTextBlock* WinningStringText;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget))
 	UTextBlock* AIScoreText;
@@ -87,6 +87,10 @@ private:
 	void MoveHandler(FString stringMove, int32 moveNumber);
 
 	//Note: Button click is handled in Chess_StoryBoardEntry
+
+	UFUNCTION()
+	//Method to handle game over event, 
+	void GameOverHandler(ChessColor winner);
 
 	UFUNCTION()
 	void MessageChangeHandler();

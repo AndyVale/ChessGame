@@ -16,7 +16,7 @@ AChess_GameMode::AChess_GameMode()
 	//Gamemodebase properties:
 	PlayerControllerClass = AChess_PlayerController::StaticClass();
 	DefaultPawnClass = AChess_HumanPlayer::StaticClass();
-	UE_LOG(LogTemp, Error, TEXT("GameMode CREATA"));
+	UE_LOG(LogTemp, Display, TEXT("GameMode CREATA"));
 }
 
 AChess_GameMode::~AChess_GameMode()
@@ -137,7 +137,8 @@ void AChess_GameMode::ShowPromotionWidget(ChessColor playerColor)
 void AChess_GameMode::GoBackToActualMove()
 {
 	NextMoveNumber = NextActualMoveNumber;//the next move number is the actual move number showed on board
-	TurnNumber = (NextActualMoveNumber - 1) % 2 == 0 ? (NextActualMoveNumber - 1) / 2 + 1 : (NextActualMoveNumber - 1) / 2 + 1;//
+	TurnNumber = (NextActualMoveNumber - 1) % 2 == 0 ? (NextActualMoveNumber - 1) / 2 + 1 : (NextActualMoveNumber - 1) / 2 + 1;
+	CurrentPlayer = 0;//the current player is the white player (the white player is the human player and is the only one that can go back in moves)
 	bIsOnReplay = false;
 	bIsGameOver = false;//reset the game over flag (no resetting points)
 	OnTurnGoBack.Broadcast(NextActualMoveNumber - 1);//broadcast the event to all the listeners
@@ -150,12 +151,12 @@ void AChess_GameMode::SelectedPawnPromotionHandler(CP ChessPieceEnum)
 	bMustSelectPiecePromotion = false;
 	if (ControlChecks())//Check if the game is over, a pawn promotion can cause a checkmate
 	{
-		bIsGameOver = true;
-		CurrentPlayer == 0 ? Players[1]->OnWin() : Players[0]->OnWin();
+		CurrentPlayer == 0 ? Players[1]->OnWin() : Players[0]->OnWin();//if the game is over, the winner is the other player, attention at the order of this instruction and the next one (gameoversignla modifies currentplayer)
+		GameOverSignal(CurrentPlayer == 0 ? Players[1]->PlayerColor : Players[0]->PlayerColor);
 	}
 	else if (ControlStall())//Check if the game is over, a pawn promotion can cause a stall
 	{
-		bIsGameOver = true;
+		GameOverSignal(ChessColor::NAC);
 	}
 
 	TurnNextPlayer();//pass the turn to the next player
@@ -172,13 +173,10 @@ void AChess_GameMode::TurnNextPlayer()
 {
 	if (!bMustSelectPiecePromotion)//if the player has not to select the piece promotion
 	{
-		ToggleCurrentPlayer();//Calculate the next player
 		if (!bIsGameOver)
 		{
-
 			Board->RestoreBoardColors();
-			Players[CurrentPlayer]->OnTurn();//Tell the next player to play
-
+			ToggleCurrentPlayer();//Calculate the next player
 			UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 
 			if (!GameInstanceRef)
@@ -189,17 +187,18 @@ void AChess_GameMode::TurnNextPlayer()
 
 			if (ControlChecks())//Check if the game is over, a move can cause a checkmate
 			{
-				bIsGameOver = true;
-				CurrentPlayer == 0 ? Players[1]->OnWin() : Players[0]->OnWin();//if the game is over, the winner is the other player
+				CurrentPlayer == 0 ? Players[1]->OnWin() : Players[0]->OnWin();//if the game is over, the winner is the other player, attention at the order of this instruction and the next one (gameoversignla modifies currentplayer)
+				GameOverSignal(CurrentPlayer == 0 ? Players[1]->PlayerColor : Players[0]->PlayerColor);//if the game is over, the winner is the other player)
 				return;
 			}
 			else if (ControlStall())//Check if the game is over, a move can cause a stall
 			{
-				bIsGameOver = true;
-				GameInstanceRef->SetTurnMessage(TEXT("Stall!"));
+				GameOverSignal(ChessColor::NAC);//There is no winner, the game is a stall
 				return;
 			}
-
+			else {
+				Players[CurrentPlayer]->OnTurn();//Tell the next player to play
+			}
 		}
 	}
 }
@@ -213,7 +212,7 @@ bool AChess_GameMode::ControlChecks() //TODO: Stall check
 	{
 		if(Board->GetMoveShowedOnBoard()->PlayerOnCheckMate == colorToControl)
 		{
-			UE_LOG(LogTemp, Error, TEXT("--------MATTO!!--------"));
+			UE_LOG(LogTemp, Display, TEXT("--------MATTO!!--------"));
 			mate = true;
 		}
 		if (Board->GetSquareFromXY(*Board->GetKingPosition(colorToControl)))//get the king position and set the danger color
@@ -231,14 +230,22 @@ bool AChess_GameMode::ControlChecks() //TODO: Stall check
 
 bool AChess_GameMode::ControlStall()
 {
-	ChessColor colorToControl = NAC;
-	colorToControl = CurrentPlayer == 0 ? WHITE : BLACK;
-	bool stall = Board->StallControl(colorToControl);
-	if (stall) {
-		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("--------STALLO!!--------"));
-		UE_LOG(LogTemp, Error, TEXT("--------STALLO!!--------"));
+	bool stall = false;
+	if (Board->GetMoveShowedOnBoard() && Board->GetMoveShowedOnBoard()->PlayerOnStall != ChessColor::NAC)
+	{
+		stall = true;
+		UE_LOG(LogTemp, Display, TEXT("--------STALLO!!--------"));
 	}
 	return stall;
+}
+
+void AChess_GameMode::GameOverSignal(ChessColor C)
+{
+	bIsGameOver = true;
+	OnGameOver.Execute(C);//notify the HUD that the game is over and the winner is the C player
+
+	//force the player swap to human player to notify the HUD to allow the player to use the buttons (Not an elegant solution because the timer is used to avoid )
+	PlayerSwapNotify(true);
 }
 
 void AChess_GameMode::ResetHandler()

@@ -104,6 +104,7 @@ void AChess_MinimaxPlayer::MakeMinimaxMove()
 		}
 		else
 		{
+			UE_LOG(LogTemp, Error, TEXT("Minimax player has no moves to make"));
 			//reset occurred or move is not valid
 		}
 	}
@@ -162,7 +163,7 @@ TSharedPtr<Chess_Move> AChess_MinimaxPlayer::FindBestMove(AChessboard* board)
 			int32 indx = FMath::Rand() % bestMoves.Num();
 			return bestMoves[indx];
 		}*/
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("%f"), bestScore));
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Yellow, FString::Printf(TEXT("Minimax expected best score: %f"), bestScore));
 		return lastBestMove;//nullptr;//
 	}
 	else//play as Maximizer

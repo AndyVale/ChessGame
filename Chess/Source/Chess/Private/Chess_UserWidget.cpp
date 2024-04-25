@@ -29,6 +29,7 @@ void UChess_UserWidget::NativeConstruct()
             GameMode->OnShowPromotionWidget.BindUObject(this, &UChess_UserWidget::SetPromotionWidgetVisible);
             GameMode->OnTurnGoBack.AddUObject(this, &UChess_UserWidget::RemoveMovesUntil);
             GameMode->OnTurnSwap.BindUObject(this, &UChess_UserWidget::SetIsEnabledButtons);
+            GameMode->OnGameOver.BindUObject(this, &UChess_UserWidget::GameOverHandler);
         }
     }
     else
@@ -92,6 +93,7 @@ void UChess_UserWidget::ReplayMove(int32 moveNumber)
 void UChess_UserWidget::RemoveMovesUntil(int32 moveNumber)
 {
     //moveNumber = number of moves to mantain
+    WinningStringText->SetText(FText::FromString(""));
     int32 numberOfEntriesToRemove = TurnsHistory.Num() - moveNumber / 2;
     while (numberOfEntriesToRemove > 0)
     {
@@ -171,6 +173,7 @@ void UChess_UserWidget::ResetHandler() {
             StoryBoardScrollBox->RemoveChildAt((StoryBoardScrollBox->GetChildrenCount() - 1));
         }
     }
+    WinningStringText->SetText(FText::FromString(""));
 }
 
 void UChess_UserWidget::MoveHandler(FString stringMove, int32 moveNumber)
@@ -201,6 +204,30 @@ void UChess_UserWidget::MoveHandler(FString stringMove, int32 moveNumber)
         (moveNumber - 1) % 2 == 0 ? selectedButton->OnClicked.AddDynamic(moveTurnEntry, &UChess_StoryBoardEntry::WhiteButtonClickHandler) : selectedButton->OnClicked.AddDynamic(moveTurnEntry, &UChess_StoryBoardEntry::BlackButtonClickHandler);
     }
     (moveNumber - 1) % 2 == 0 ? moveTurnEntry->SetWhiteMoveText(stringMove) : moveTurnEntry->SetBlackMoveText(stringMove);
+}
+
+void UChess_UserWidget::GameOverHandler(ChessColor winner)
+{
+    //UChess_StoryBoardEntry* moveTurnEntry = CreateWidget<UChess_StoryBoardEntry>(GetWorld(), StoryBoardEntry);
+    FString stringMove;
+    switch (winner) {
+        case ChessColor::WHITE:
+			CurrentPlayerText->SetText(FText::FromString("White wins!"));
+            stringMove = "1 - 0";
+			break;
+        case ChessColor::BLACK:
+            CurrentPlayerText->SetText(FText::FromString("Black wins!"));
+            stringMove = "0 - 1";
+            break;
+        default:
+            CurrentPlayerText->SetText(FText::FromString("Stall!"));
+            stringMove = "1/2 - 1/2";
+    }
+    
+    if (GameMode)
+    {
+        WinningStringText->SetText(FText::FromString(stringMove));
+    }
 }
 
 void UChess_UserWidget::MessageChangeHandler()

@@ -39,7 +39,7 @@ void AChess_HumanPlayer::BeginPlay()
 }
 
 void AChess_HumanPlayer::ReplayHandler(int32 moveNumber) {
-    bIsMyTurn = MyColor == ChessColor::WHITE ? moveNumber % 2 == 0 : moveNumber % 2 == 1;//if moveNumber is even and I'm white or moveNumber is odd and I'm black is my turn
+    bIsMyTurn = PlayerColor == ChessColor::WHITE ? moveNumber % 2 == 0 : moveNumber % 2 == 1;//if moveNumber is even and I'm white or moveNumber is odd and I'm black is my turn
     SelectedPiece = nullptr;//remove piece selected
     ActiveMoves.Empty();//remove active moves
 }
@@ -106,7 +106,7 @@ void AChess_HumanPlayer::OnClick()
             //Select piece
             if (AChessPiece* CurrPiece = Cast<AChessPiece>(Hit.GetActor()))
             {
-                if (CurrPiece->PieceColor == MyColor) {
+                if (CurrPiece->PieceColor == PlayerColor) {
                     SelectedPiece = CurrPiece;
                     ActiveMoves = Board->GetMovesAndShowHints(CurrPiece, true);
                 }

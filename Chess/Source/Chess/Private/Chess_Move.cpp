@@ -282,6 +282,10 @@ FString Chess_Move::GetPieceLetter(AChessPiece* piece)
         return FString("N");
     }
     if (const ACP_Pawn* tmp = Cast<ACP_Pawn>(piece)) {
+        if (tmp->PromotedPiece)//if the pawn has been promoted return the letter of the promoted piece
+        {
+			return GetPieceLetter(tmp->PromotedPiece);
+		}
         return FString("");
     }
     if (const ACP_Queen* tmp = Cast<ACP_Queen>(piece)) {

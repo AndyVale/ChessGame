@@ -44,7 +44,6 @@ public:
 		return tmp;
 	}
 	void PromoteIn(CP promotedPiece);
-	bool bIsPromoted = false;
 	AChessPiece* PromotedPiece;//TODO: Spawn the pieces in the begin play and hide them
 protected:
 	// Called when the game starts or when spawned

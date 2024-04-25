@@ -87,7 +87,6 @@ void AChess_RandomPlayer::MakeRandomMove() {
 		} while (numSize == 0 && actualIsVisited.Find(false) != INDEX_NONE);//until we find a piece with possible moves or we have visited all the pieces
 
 		TSharedPtr<Chess_Move> randomMovePtr = nullptr;
-		
 		if (bIsMyTurn) {
 			if (numSize != 0)//if there are possible moves (if not, the game is over)
 			{
@@ -97,7 +96,8 @@ void AChess_RandomPlayer::MakeRandomMove() {
 			}
 			else
 			{
-				//STALL
+				//STALL or CHECKMATE
+				UE_LOG(LogTemp, Error, TEXT("Random player has no moves to make"));
 			}
 
 			if (randomMovePtr) {

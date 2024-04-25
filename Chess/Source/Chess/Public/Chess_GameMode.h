@@ -11,6 +11,7 @@
 #include "Chess_GameMode.generated.h"
 
 DECLARE_DELEGATE_OneParam(FOnShowPromotionWidget, ChessColor);//delegate used to notify Chess_UserWidget to show pawnpromotion HUD
+DECLARE_DELEGATE_OneParam(FOnGameOver, ChessColor);//delegate used to notify Chess_UserWidget that the game is over passing the winner color
 DECLARE_DELEGATE_OneParam(FOnTurnSwap, bool);//Used to notify Chess_UserWidget to make it clickable (true) or not (false) the changeOpponentButton
 DECLARE_DELEGATE_TwoParams(FOnMoveUpdate, const FString, int32);//notify Chess_UserWidget to update storyboard at the specified move number with the specified string
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTurnGoBack, int32);//notify Chess_UserWidget to update storyboard removign moves until number specified
@@ -39,6 +40,9 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	//Delegate used to broadcast to all the listeners (chessboard and hudwidget) the move number that has to be replayed
 	FOnReplayMove OnReplayMove;
+
+	//Delegate used to notify the HUD widget that the game is over
+	FOnGameOver OnGameOver;
 
 	//Delegate used to notify the HUD widget to show pawn promotion widget
 	FOnShowPromotionWidget OnShowPromotionWidget;
@@ -98,6 +102,9 @@ private:
 
 	//Method used to control if the game is in stall, return true if the game is in stall, false otherwise
 	bool ControlStall();//TODO: Non funziona se ad andare in stallo è il player umano
+
+	//Method used to notify the game is over to all the listeners, the ChessColor passed is the winner color
+	void GameOverSignal(ChessColor C);
 
 	UFUNCTION()
 	//Method used to reset the game, used on reset event provided by GameInstance

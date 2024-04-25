@@ -43,7 +43,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	//Color of the player (work in progress)
-	ChessColor MyColor = WHITE;
+	ChessColor PlayerColor = WHITE;
 private:
 	UFUNCTION()
 	//Method to handle the reset event
