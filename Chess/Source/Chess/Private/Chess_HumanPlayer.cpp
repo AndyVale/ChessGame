@@ -67,12 +67,11 @@ void AChess_HumanPlayer::OnTurn()
     {
         UE_LOG(LogTemp, Error, TEXT("GameMode is null in AChess_HumanPlayer OnTurn"));
     }
-    GameInstanceRef->SetTurnMessage(TEXT("Human Turn"));//TODO: add color
+    GameInstanceRef->SetTurnMessage(PlayerColor == ChessColor::WHITE ? TEXT("White Turn") : TEXT("Black Turn"));
 }
 
 void AChess_HumanPlayer::OnWin()
 {
-    GameInstanceRef->SetTurnMessage(TEXT("Human Wins!"));
     GameInstanceRef->IncrementScoreHumanPlayer();
 }
 

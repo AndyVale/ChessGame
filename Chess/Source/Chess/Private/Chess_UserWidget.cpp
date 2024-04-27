@@ -23,7 +23,7 @@ void UChess_UserWidget::NativeConstruct()
         {
             if (CurrentPlayerText)
             {
-                CurrentPlayerText->SetText(FText::FromString("White turn"));
+                CurrentPlayerText->SetText(FText::FromString("White Turn"));
             }
             GameInstanceRef->OnMessageChange.AddDynamic(this, &UChess_UserWidget::MessageChangeHandler);
             GameMode->OnShowPromotionWidget.BindUObject(this, &UChess_UserWidget::SetPromotionWidgetVisible);

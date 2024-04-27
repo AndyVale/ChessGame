@@ -265,6 +265,6 @@ void AChess_GameMode::PlayerSwapNotify(bool IsHumanPlayer)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT("OnTurnSwap event is not bound"));
+		UE_LOG(LogTemp, Warning, TEXT("OnTurnSwap event is not bound"));
 	}
 }

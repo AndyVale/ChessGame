@@ -45,7 +45,7 @@ void AChess_RandomPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 void AChess_RandomPlayer::OnTurn()
 {
-	GameInstanceRef->SetTurnMessage(TEXT("Random player turn!"));
+	GameInstanceRef->SetTurnMessage(PlayerColor == ChessColor::WHITE ? TEXT("White Turn") : TEXT("Black Turn"));
 	FTimerHandle TimerHandle;
 	if (AChess_GameMode* GameMode = Cast<AChess_GameMode>(GetWorld()->GetAuthGameMode()))
 	{
@@ -112,7 +112,6 @@ void AChess_RandomPlayer::MakeRandomMove() {
 
 void AChess_RandomPlayer::OnWin()
 {
-	GameInstanceRef->SetTurnMessage(TEXT("Random player Wins!"));
 	GameInstanceRef->IncrementScoreAIPlayer();
 }
 

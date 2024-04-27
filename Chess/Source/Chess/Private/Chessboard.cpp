@@ -329,7 +329,7 @@ AChessPiece* AChessboard::SpawnStarterPieceByXYPosition(const int32 InX, const i
 		{
 			Piece->SetColorAndMaterial(InY == 7 ? WHITE : BLACK);//WHITE pieces are in Y=7
 		}
-	}
+	}	
 	//updating material count:{
 	//if (Piece)
 	//{

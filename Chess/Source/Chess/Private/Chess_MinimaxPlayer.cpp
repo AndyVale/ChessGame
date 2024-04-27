@@ -50,7 +50,7 @@ void AChess_MinimaxPlayer::OnTurn()
 	FTimerHandle TimerHandle;
 	if (GameInstanceRef)
 	{
-		GameInstanceRef->SetTurnMessage(TEXT("Minimax player turn!"));
+		GameInstanceRef->SetTurnMessage(PlayerColor == ChessColor::WHITE ? TEXT("White Turn") : TEXT("Black Turn"));
 	}
 	else
 	{
@@ -72,7 +72,6 @@ void AChess_MinimaxPlayer::OnTurn()
 
 void AChess_MinimaxPlayer::OnWin()
 {
-	GameInstanceRef->SetTurnMessage(TEXT("Minimax player Wins!"));//TODO: add color
 	GameInstanceRef->IncrementScoreAIPlayer();
 }
 
