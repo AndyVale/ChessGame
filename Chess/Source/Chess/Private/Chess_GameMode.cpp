@@ -150,17 +150,23 @@ void AChess_GameMode::SelectedPawnPromotionHandler(CP ChessPieceEnum)
 	TSharedPtr<Chess_Move> move = Board->PromoteLastMove(ChessPieceEnum);//set the promotion in the last move
 	UpdateLastMove(move);//write the promotion in the storyboard
 	bMustSelectPiecePromotion = false;
-	if (ControlChecks())//Check if the game is over, a pawn promotion can cause a checkmate
+	
+	ToggleCurrentPlayer();//Calculate the next player
+	
+	if (ControlChecks())//Check if the game is over, a move can cause a checkmate
 	{
 		CurrentPlayer == 0 ? Players[1]->OnWin() : Players[0]->OnWin();//if the game is over, the winner is the other player, attention at the order of this instruction and the next one (gameoversignla modifies currentplayer)
-		GameOverSignal(CurrentPlayer == 0 ? Players[1]->PlayerColor : Players[0]->PlayerColor);
+		GameOverSignal(CurrentPlayer == 0 ? Players[1]->PlayerColor : Players[0]->PlayerColor);//if the game is over, the winner is the other player)
+		return;
 	}
-	else if (ControlStall())//Check if the game is over, a pawn promotion can cause a stall
+	else if (ControlStall())//Check if the game is over, a move can cause a stall
 	{
-		GameOverSignal(ChessColor::NAC);
+		GameOverSignal(ChessColor::NAC);//There is no winner, the game is a stall
+		return;
 	}
-	
-	TurnNextPlayer();//pass the turn to the next player
+	else {
+		Players[CurrentPlayer]->OnTurn();//Tell the next player to play
+	}
 }
 
 void AChess_GameMode::ReplayMove(int32 moveNumber)
@@ -178,13 +184,6 @@ void AChess_GameMode::TurnNextPlayer()
 		{
 			Board->RestoreBoardColors();
 			ToggleCurrentPlayer();//Calculate the next player
-			UChess_GameInstance* GameInstanceRef = Cast<UChess_GameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-
-			if (!GameInstanceRef)
-			{
-				UE_LOG(LogTemp, Error, TEXT("GameInstance is null, can not turn nexr player"));
-				return;
-			}
 
 			if (ControlChecks())//Check if the game is over, a move can cause a checkmate
 			{
