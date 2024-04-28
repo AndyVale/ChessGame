@@ -22,26 +22,27 @@ public:
 
 	AChessPiece* getPiece();
 
-	//FVector2D Cordinates;
-
 	void SetSquareColor(bool c);
 
 	void SetAsSelected();
 
 	bool IsSelected();
 
+	//Sets square material to check material
 	void SetDangerColor();
 
 	bool IsDanger();
 
+	//Sets square material to replay material
 	void InReplay();
+	bool bIsInReplay = false;
 
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
+
 	AChessPiece* PieceOn;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Components")
@@ -64,7 +65,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	UMaterialInstance* ReplayMaterial;
-	//bool bIsSelected;
 
 public:
 	// Called every frame

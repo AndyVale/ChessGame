@@ -241,8 +241,5 @@ void UChess_UserWidget::MessageChangeHandler()
 void UChess_UserWidget::SetIsEnabledButtons(bool s)
 {
     ChangeOpponentButton->SetIsEnabled(s);
-    for (UChess_StoryBoardEntry* entry : TurnsHistory)
-    {
-        entry->SetIsEnabledForBothButtons(s);
-    }
+    StoryBoardScrollBox->SetIsEnabled(s);//disable all replay buttons
 }

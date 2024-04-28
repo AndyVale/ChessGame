@@ -76,16 +76,4 @@ void UChess_StoryBoardEntry::SetBlackMoveText(FString t)
 	}
 }
 
-void UChess_StoryBoardEntry::SetIsEnabledForBothButtons(bool s)
-{
-	if (WhiteBackButton && BlackBackButton)
-	{
-		WhiteBackButton->SetIsEnabled(s);
-		BlackBackButton->SetIsEnabled(s);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("At least one of the buttons is null in UChess_StoryBoardEntry"));
-	}
-}
 

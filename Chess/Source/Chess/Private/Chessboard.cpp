@@ -257,7 +257,7 @@ void AChessboard::CancelFeasibleSquares()
 			ASquare* square = GetSquareFromXY((FVector2D(x, y)));
 			if (square && !square->IsDanger() && square->IsSelected())
 			{
-				square->SetSquareColor((x + y) % 2 == 0);
+				square->bIsInReplay ? square->InReplay() : square->SetSquareColor((x + y) % 2 == 0);
 			}
 		}
 	}

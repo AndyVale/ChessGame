@@ -49,7 +49,6 @@ void Chess_Move::CalculateResult()
 
 void Chess_Move::MakeMove(bool simulate)
 {
-    //TODO CONTROLLA SIA TUTTO GIUSTO
     if (!CapturingPiece)
     {
         UE_LOG(LogTemp, Error, TEXT("MakeAMove:Impossible move, no pieces in old position"));
@@ -69,7 +68,7 @@ void Chess_Move::MakeMove(bool simulate)
     {
         if (CapturedPiece)
         {
-            if (CapturedPiece->PieceColor == BLACK)//TODO:RIARRANGIA
+            if (CapturedPiece->PieceColor == BLACK)
                 CapturedPiece->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(-1, -1));
             else
                 CapturedPiece->SetActorLocation(ReferredBoard->GetRelativeLocationByXYPosition(8, 8));

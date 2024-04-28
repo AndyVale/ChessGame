@@ -19,6 +19,7 @@ void ASquare::SetSquareColor(bool c)
 {
 	c ? SquareMesh->SetMaterial(0, WhiteMaterial) : SquareMesh->SetMaterial(0, BlackMaterial);
 	bIsSelected = false;
+	bIsInReplay = false;
 }
 
 void ASquare::SetAsSelected()
@@ -39,9 +40,7 @@ AChessPiece* ASquare::getPiece()
 
 bool ASquare::IsSelected()
 {
-	auto x = SquareMesh->GetMaterial(0);
 	return bIsSelected;
-	return (SquareMesh->GetMaterial(0) == SelectedMaterial);
 }
 
 // Called when the game starts or when spawned
@@ -63,6 +62,7 @@ bool ASquare::IsDanger()
 void ASquare::InReplay()
 {
 	SquareMesh->SetMaterial(0, ReplayMaterial);
+	bIsInReplay = true;
 }
 
 /* Called every frame

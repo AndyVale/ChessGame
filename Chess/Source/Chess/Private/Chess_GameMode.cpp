@@ -127,6 +127,7 @@ void AChess_GameMode::UpdateLastMove(TSharedPtr<Chess_Move> move)
 
 void AChess_GameMode::ShowPromotionWidget(ChessColor playerColor)
 {
+	PlayerSwapNotify(false);//change player to avoid unexpected click on storyboard or "change opponent" button
 	if (playerColor == Players[0]->PlayerColor) {//if is the human player, notify the HUD to show the promotion widget.
 		OnShowPromotionWidget.Execute(playerColor);
 		bMustSelectPiecePromotion = true;
@@ -158,7 +159,7 @@ void AChess_GameMode::SelectedPawnPromotionHandler(CP ChessPieceEnum)
 	{
 		GameOverSignal(ChessColor::NAC);
 	}
-
+	
 	TurnNextPlayer();//pass the turn to the next player
 }
 
@@ -254,6 +255,7 @@ void AChess_GameMode::ResetHandler()
 	TurnNumber = 1;
 	NextMoveNumber = 1;
 	NextActualMoveNumber = 1;
+	bMustSelectPiecePromotion = false;
 	ChoosePlayerAndStartGame();
 }
 

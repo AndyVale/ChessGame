@@ -54,8 +54,6 @@ public:
 	void SetWhiteMoveText(FString t);
 	//method to set the text of the black move (in the storyboard, the move of the black player is shown at the right of the white move)
 	void SetBlackMoveText(FString t);
-	//wrapper to call both setisenabled methods on the two buttons
-	void SetIsEnabledForBothButtons(bool s);
 private:
 	//Aux method to handle button click events
 	void ButtonClickHandler(bool isWhiteButton);
